@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Planning — Réseau de tâches</title>
+  <title>Réseau PERT</title>
   <style>
     :root {
       color-scheme: light;
@@ -33,10 +33,9 @@
       position: relative;
       z-index: 10;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      align-items: flex-start;
       min-height: 58px;
-      padding: 0 22px;
+      padding: 10px 22px;
       background: #f8f9fa;
       border-bottom: 1px solid #c7ccd1;
       box-shadow: 0 1px 4px rgb(31 41 51 / 8%);
@@ -47,6 +46,31 @@
       font-size: 17px;
       font-weight: 650;
       letter-spacing: -0.01em;
+    }
+
+    .identite-projet {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .ligne-titre {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    #resume-ressources {
+      margin: 0;
+      color: #4d5964;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .resume-ressource {
+      display: block;
     }
 
     .aide {
@@ -268,6 +292,25 @@
       bottom: 0;
     }
 
+    .ressources-exterieures {
+      position: absolute;
+      top: 0;
+      left: 100px;
+      width: 330px;
+      color: #111;
+      font-size: 12px;
+      line-height: 1.25;
+      text-align: left;
+    }
+
+    .ressources-exterieures:empty {
+      display: none;
+    }
+
+    .ressource-exterieure {
+      overflow-wrap: anywhere;
+    }
+
     .ligne-date {
       display: flex;
       align-items: center;
@@ -359,6 +402,15 @@
       background: rgb(31 41 51 / 35%);
     }
 
+    dialog.fenetre-flottante {
+      position: fixed;
+      z-index: 30;
+      max-width: calc(100vw - 16px);
+      max-height: calc(100vh - 16px);
+      margin: 0;
+      overflow: auto;
+    }
+
     form {
       padding: 24px;
     }
@@ -376,7 +428,8 @@
     }
 
     input,
-    textarea {
+    textarea,
+    select {
       width: 100%;
       margin: 0 0 17px;
       padding: 8px 10px;
@@ -397,9 +450,66 @@
     }
 
     input:focus,
-    textarea:focus {
+    textarea:focus,
+    select:focus {
       border-color: #3275c7;
       outline: 3px solid rgb(50 117 199 / 18%);
+    }
+
+    #dialogue-ressources {
+      width: min(520px, calc(100vw - 32px));
+    }
+
+    #liste-ressources {
+      min-height: 155px;
+      color: #111;
+      font-size: 13px;
+    }
+
+    .actions-ressources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 18px;
+    }
+
+    .actions-ressources button {
+      flex: 1 1 120px;
+    }
+
+    #dialogue-details {
+      width: min(540px, calc(100vw - 32px));
+    }
+
+    .affectation-ressource {
+      padding: 12px;
+      border: 1px solid #d5dade;
+      border-radius: 7px;
+      background: #f8f9fa;
+    }
+
+    .ligne-affectation {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(100px, 1fr);
+      gap: 10px;
+    }
+
+    #liste-affectations {
+      min-height: 105px;
+      margin-bottom: 10px;
+      color: #111;
+      font-size: 13px;
+    }
+
+    .actions-affectation {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+
+    .actions-affectation button {
+      flex: 1 1 115px;
     }
 
     .actions {
@@ -521,20 +631,26 @@
 </head>
 <body>
   <header class="barre-superieure">
-    <h1>Planning — Réseau de tâches</h1>
-    <div class="outils">
-      <p class="aide">Double-cliquez dans le vide pour créer, ou sur une tâche pour la modifier.</p>
-      <div class="actions-projet">
-        <button id="enregistrer-projet" class="bouton-barre" type="button">Enregistrer</button>
-        <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
-        <button id="imprimer-projet" class="bouton-barre" type="button">Imprimer</button>
-        <input id="fichier-projet" type="file" accept="application/json,.json" hidden>
+    <div class="identite-projet">
+      <div class="ligne-titre">
+        <h1>Réseau PERT</h1>
+        <div class="outils">
+          <div class="actions-projet">
+            <button id="enregistrer-projet" class="bouton-barre" type="button">Enregistrer</button>
+            <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
+            <button id="gerer-ressources" class="bouton-barre" type="button">Ressources</button>
+            <button id="imprimer-projet" class="bouton-barre" type="button">Imprimer</button>
+            <input id="fichier-projet" type="file" accept="application/json,.json" hidden>
+          </div>
+          <button id="supprimer-liaison" class="bouton-barre" type="button" disabled>Supprimer la liaison</button>
+          <div class="parametre-unite">
+            <label for="unite">Unité</label>
+            <input id="unite" type="text" value="j" maxlength="8" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
       </div>
-      <button id="supprimer-liaison" class="bouton-barre" type="button" disabled>Supprimer la liaison</button>
-      <div class="parametre-unite">
-        <label for="unite">Unité</label>
-        <input id="unite" type="text" value="j" maxlength="8" autocomplete="off" spellcheck="false">
-      </div>
+      <p class="aide">Double-cliquez dans le vide pour créer une activité, ou Clic droit ou gauche sur une activité pour la renseigner ou la modifier.</p>
+      <p id="resume-ressources">Ressources utilisées : aucune</p>
     </div>
   </header>
 
@@ -558,9 +674,9 @@
 
   <dialog id="dialogue-tache">
     <form id="formulaire-tache">
-      <h2 id="titre-dialogue">Nouvelle tâche</h2>
+      <h2 id="titre-dialogue">Nouvelle activité</h2>
 
-      <label for="nom">Nom de la tâche</label>
+      <label for="nom">Nom de l’activité</label>
       <input id="nom" name="nom" type="text" maxlength="80" required autocomplete="off">
 
       <label for="objet">Objet</label>
@@ -583,12 +699,58 @@
       <label for="description">Description</label>
       <textarea id="description" name="description" rows="5"></textarea>
 
-      <p class="calcul-en-attente"><strong>Ressources :</strong> En attente</p>
+      <div class="affectation-ressource">
+        <div class="ligne-affectation">
+          <div>
+            <label for="ressource-activite">Ressource</label>
+            <select id="ressource-activite"></select>
+          </div>
+          <div>
+            <label for="duree-ressource">Durée (<span id="unite-duree-ressource"></span>)</label>
+            <input id="duree-ressource" type="number" min="0.1" step="0.1" inputmode="decimal">
+          </div>
+        </div>
+
+        <div class="actions-affectation">
+          <button id="ajouter-affectation" type="button">Ajouter</button>
+          <button id="modifier-affectation" type="button" disabled>Modifier</button>
+          <button id="retirer-affectation" type="button" disabled>Retirer</button>
+        </div>
+
+        <label for="liste-affectations">Ressources affectées</label>
+        <select id="liste-affectations" size="4"></select>
+      </div>
+
       <p class="calcul-en-attente"><strong>Coût :</strong> En attente</p>
 
       <div class="actions">
         <button id="annuler-details" type="button">Annuler</button>
         <button type="submit">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialogue-ressources">
+    <form id="formulaire-ressources">
+      <h2>Ressources du projet</h2>
+
+      <label for="liste-ressources">Couples Nom — Discipline</label>
+      <select id="liste-ressources" size="7" aria-label="Liste des ressources"></select>
+
+      <label for="nom-ressource">Nom</label>
+      <input id="nom-ressource" type="text" maxlength="80" autocomplete="off">
+
+      <label for="discipline-ressource">Discipline</label>
+      <input id="discipline-ressource" type="text" maxlength="80" autocomplete="off">
+
+      <div class="actions-ressources">
+        <button id="ajouter-ressource" type="button">Ajouter</button>
+        <button id="modifier-ressource" type="button" disabled>Modifier</button>
+        <button id="supprimer-ressource" type="button" disabled>Supprimer</button>
+      </div>
+
+      <div class="actions">
+        <button id="fermer-ressources" type="button">Fermer</button>
       </div>
     </form>
   </dialog>
@@ -611,28 +773,51 @@
     const boutonEnregistrerProjet = document.querySelector("#enregistrer-projet");
     const boutonOuvrirProjet = document.querySelector("#ouvrir-projet");
     const boutonImprimerProjet = document.querySelector("#imprimer-projet");
+    const boutonGererRessources = document.querySelector("#gerer-ressources");
     const fichierProjet = document.querySelector("#fichier-projet");
     const dialogueDetails = document.querySelector("#dialogue-details");
     const formulaireDetails = document.querySelector("#formulaire-details");
     const titreDetails = document.querySelector("#titre-details");
     const champDescription = document.querySelector("#description");
     const boutonAnnulerDetails = document.querySelector("#annuler-details");
+    const champRessourceActivite = document.querySelector("#ressource-activite");
+    const champDureeRessource = document.querySelector("#duree-ressource");
+    const uniteDureeRessource = document.querySelector("#unite-duree-ressource");
+    const listeAffectations = document.querySelector("#liste-affectations");
+    const boutonAjouterAffectation = document.querySelector("#ajouter-affectation");
+    const boutonModifierAffectation = document.querySelector("#modifier-affectation");
+    const boutonRetirerAffectation = document.querySelector("#retirer-affectation");
+    const dialogueRessources = document.querySelector("#dialogue-ressources");
+    const listeRessources = document.querySelector("#liste-ressources");
+    const champNomRessource = document.querySelector("#nom-ressource");
+    const champDisciplineRessource = document.querySelector("#discipline-ressource");
+    const boutonAjouterRessource = document.querySelector("#ajouter-ressource");
+    const boutonModifierRessource = document.querySelector("#modifier-ressource");
+    const boutonSupprimerRessource = document.querySelector("#supprimer-ressource");
+    const boutonFermerRessources = document.querySelector("#fermer-ressources");
+    const resumeRessources = document.querySelector("#resume-ressources");
 
     const LARGEUR_TACHE = 200;
     const MILLISECONDES_PAR_MINUTE = 60 * 1000;
     const MILLISECONDES_PAR_HEURE = 60 * MILLISECONDES_PAR_MINUTE;
     const MILLISECONDES_PAR_JOUR = 24 * MILLISECONDES_PAR_HEURE;
-    const CLE_SAUVEGARDE_LOCALE = "planning-reseau-sauvegarde-automatique";
+    const CLE_SAUVEGARDE_LOCALE = "planning-reseau-sauvegarde-automatique-v2";
+    const CLE_CATALOGUE_RESSOURCES = "planning-reseau-catalogue-ressources-v2";
+    const MESSAGE_DUREE_RESSOURCE = "La durée d’une ressource ne peut pas dépasser celle de l’activité. Augmentez la durée de l’activité ou modifiez l’affectation des ressources.";
     const PROJET_DEMONSTRATION = {
       format: "planning-reseau",
       version: 1,
       unite: "j",
+      ressources: [
+        { id: "r1", nom: "Res 2", discipline: "Discipline C" },
+        { id: "r2", nom: "Res 3", discipline: "Discipline F" }
+      ],
       taches: [
-        { id: "1", nom: "e1", duree: 5, x: 4, y: 259, contrainteDebut: "2026-08-20T19:34" },
-        { id: "2", nom: "e2", duree: 3, x: 651, y: 276, contrainteDebut: "" },
-        { id: "3", nom: "e3", duree: 8, x: 359, y: 281, contrainteDebut: "" },
-        { id: "4", nom: "e5", duree: 4, x: 357, y: 2, contrainteDebut: "" },
-        { id: "5", nom: "e6", duree: 3, x: 359, y: 551, contrainteDebut: "" }
+        { id: "1", nom: "Recueil des données existantes", objet: "Regrouper les arrêtés du 05/06/2022 et les normes dans Légifrance", description: "", ressources: [], duree: 5, x: 25, y: 280, contrainteDebut: "2026-08-20" },
+        { id: "2", nom: "propositions des membres de l'équipe", objet: "Interprétation de leurs activités à effectuer", description: "", ressources: [], duree: 3, x: 696, y: 278, contrainteDebut: "" },
+        { id: "3", nom: "Réunions sectorielles", objet: "Objectifs et préparation", description: "", ressources: [{ ressourceId: "r1", duree: 2 }, { ressourceId: "r2", duree: 1 }], duree: 8, x: 359, y: 281, contrainteDebut: "" },
+        { id: "4", nom: "Répartition du travail", objet: "Assignations des activités à effectuer", description: "", ressources: [], duree: 4, x: 357, y: 2, contrainteDebut: "" },
+        { id: "5", nom: "Appels à contribution", objet: "Recueillir des propositions de participation", description: "", ressources: [], duree: 3, x: 359, y: 551, contrainteDebut: "" }
       ],
       liaisons: [
         { source: "1", cible: "3" },
@@ -649,6 +834,8 @@
     let liaisonSelectionnee = null;
     let tacheEnEdition = null;
     let tacheDetails = null;
+    let affectationsDetails = [];
+    let ressourcesProjet = [];
 
     zoneTravail.addEventListener("dblclick", (evenement) => {
       if (evenement.target !== zoneTravail) return;
@@ -670,14 +857,38 @@
       dialogueDetails.close();
     });
 
+    [dialogue, dialogueDetails].forEach((fenetre) => {
+      fenetre.addEventListener("pointerdown", () => mettreFenetreAuPremierPlan(fenetre));
+      fenetre.addEventListener("close", () => {
+        fenetre.classList.remove("fenetre-flottante");
+        fenetre.style.removeProperty("left");
+        fenetre.style.removeProperty("top");
+        fenetre.style.removeProperty("z-index");
+      });
+    });
+
+    listeAffectations.addEventListener("change", selectionnerAffectationDansListe);
+    boutonAjouterAffectation.addEventListener("click", ajouterAffectation);
+    boutonModifierAffectation.addEventListener("click", modifierAffectation);
+    boutonRetirerAffectation.addEventListener("click", retirerAffectation);
+
     formulaireDetails.addEventListener("submit", (evenement) => {
       evenement.preventDefault();
       if (!tacheDetails) return;
 
       tacheDetails.dataset.description = champDescription.value.trim();
+      tacheDetails.dataset.ressources = JSON.stringify(affectationsDetails);
+      afficherRessourcesTache(tacheDetails);
+      actualiserLiaisonsDe(tacheDetails);
       sauvegarderProjetLocal();
       dialogueDetails.close();
     });
+
+    listeRessources.addEventListener("change", selectionnerRessourceDansListe);
+    boutonAjouterRessource.addEventListener("click", ajouterRessource);
+    boutonModifierRessource.addEventListener("click", modifierRessource);
+    boutonSupprimerRessource.addEventListener("click", supprimerRessource);
+    boutonFermerRessources.addEventListener("click", () => dialogueRessources.close());
 
     champUnite.addEventListener("input", actualiserUnite);
 
@@ -690,8 +901,11 @@
     boutonEnregistrerProjet.addEventListener("click", enregistrerProjet);
     boutonOuvrirProjet.addEventListener("click", () => fichierProjet.click());
     boutonImprimerProjet.addEventListener("click", () => window.print());
+    boutonGererRessources.addEventListener("click", ouvrirGestionRessources);
     fichierProjet.addEventListener("change", ouvrirProjet);
     window.addEventListener("beforeprint", preparerImpression);
+    window.addEventListener("resize", repositionnerFenetresActivites);
+    zoneTravail.parentElement.addEventListener("scroll", repositionnerFenetresActivites);
 
     zoneTravail.addEventListener("click", (evenement) => {
       if (evenement.target === zoneTravail) selectionnerLiaison(null);
@@ -714,6 +928,14 @@
       const duree = Number(champDuree.value);
       if (!nom || !Number.isFinite(duree) || duree <= 0) return;
 
+      if (
+        tacheEnEdition
+        && lireAffectationsTache(tacheEnEdition).some((affectation) => affectation.duree > duree)
+      ) {
+        window.alert(MESSAGE_DUREE_RESSOURCE);
+        return;
+      }
+
       if (tacheEnEdition) {
         tacheEnEdition.dataset.nom = nom;
         tacheEnEdition.dataset.objet = objet;
@@ -731,32 +953,374 @@
     });
 
     function ouvrirFormulaireCreation() {
+      if (dialogue.open) {
+        dialogue.focus();
+        return;
+      }
       tacheEnEdition = null;
-      titreDialogue.textContent = "Nouvelle tâche";
+      titreDialogue.textContent = "Nouvelle activité";
       boutonValiderTache.textContent = "Créer";
       formulaire.reset();
+      dialogue.classList.remove("fenetre-flottante");
       dialogue.showModal();
       champNom.focus();
     }
 
     function ouvrirFormulaireEdition(tache) {
+      if (dialogue.open) {
+        dialogue.focus();
+        return;
+      }
       tacheEnEdition = tache;
-      titreDialogue.textContent = "Modifier la tâche";
+      titreDialogue.textContent = "Modifier l’activité";
       boutonValiderTache.textContent = "Enregistrer";
       champNom.value = tache.dataset.nom;
       champObjet.value = tache.dataset.objet || "";
       champDuree.value = tache.dataset.duree;
-      dialogue.showModal();
+      dialogue.classList.add("fenetre-flottante");
+      dialogue.show();
+      placerFenetreActivite(dialogue, tache);
       champNom.focus();
       champNom.select();
     }
 
     function ouvrirDetails(tache) {
+      if (dialogueDetails.open) {
+        dialogueDetails.focus();
+        return;
+      }
       tacheDetails = tache;
       titreDetails.textContent = tache.dataset.nom;
       champDescription.value = tache.dataset.description || "";
-      dialogueDetails.showModal();
+      affectationsDetails = lireAffectationsTache(tache).map((affectation) => ({ ...affectation }));
+      uniteDureeRessource.textContent = champUnite.value.trim() || "Un.";
+      champDureeRessource.value = "";
+      actualiserChoixRessourcesActivite();
+      actualiserListeAffectations();
+      dialogueDetails.classList.add("fenetre-flottante");
+      dialogueDetails.show();
+      placerFenetreActivite(dialogueDetails, tache);
       champDescription.focus();
+    }
+
+    function mettreFenetreAuPremierPlan(fenetre) {
+      const autreFenetre = fenetre === dialogue ? dialogueDetails : dialogue;
+      fenetre.style.zIndex = "31";
+      if (autreFenetre.open) autreFenetre.style.zIndex = "30";
+    }
+
+    function repositionnerFenetresActivites() {
+      if (dialogue.open && tacheEnEdition) placerFenetreActivite(dialogue, tacheEnEdition);
+      if (dialogueDetails.open && tacheDetails) {
+        placerFenetreActivite(dialogueDetails, tacheDetails);
+      }
+    }
+
+    function placerFenetreActivite(fenetre, tache) {
+      const marge = 8;
+      const espace = 12;
+      const cadre = tache.getBoundingClientRect();
+      const largeur = fenetre.offsetWidth;
+      const hauteur = fenetre.offsetHeight;
+      const autreFenetre = fenetre === dialogue ? dialogueDetails : dialogue;
+      const autreCadre = autreFenetre.open && autreFenetre.classList.contains("fenetre-flottante")
+        ? autreFenetre.getBoundingClientRect()
+        : null;
+      const centrerVerticalement = limiter(
+        cadre.top + (cadre.height - hauteur) / 2,
+        marge,
+        window.innerHeight - hauteur - marge
+      );
+      const centrerHorizontalement = limiter(
+        cadre.left + (cadre.width - largeur) / 2,
+        marge,
+        window.innerWidth - largeur - marge
+      );
+      const positionGauche = { x: cadre.left - largeur - espace, y: centrerVerticalement };
+      const positionDroite = { x: cadre.right + espace, y: centrerVerticalement };
+      const positionDessous = { x: centrerHorizontalement, y: cadre.bottom + espace };
+      const positionDessus = { x: centrerHorizontalement, y: cadre.top - hauteur - espace };
+      const candidats = fenetre === dialogue
+        ? [positionGauche, positionDessous, positionDessus, positionDroite]
+        : [positionDroite, positionDessus, positionDessous, positionGauche];
+
+      const dansEcran = (position) => (
+        position.x >= marge
+        && position.y >= marge
+        && position.x + largeur <= window.innerWidth - marge
+        && position.y + hauteur <= window.innerHeight - marge
+      );
+      const chevauche = (position, rectangle) => rectangle && !(
+        position.x + largeur <= rectangle.left
+        || position.x >= rectangle.right
+        || position.y + hauteur <= rectangle.top
+        || position.y >= rectangle.bottom
+      );
+      const position = candidats.find((candidat) => (
+        dansEcran(candidat) && !chevauche(candidat, autreCadre)
+      )) || candidats.find(dansEcran) || {
+        x: limiter(cadre.right + espace, marge, window.innerWidth - largeur - marge),
+        y: limiter(cadre.top, marge, window.innerHeight - hauteur - marge)
+      };
+
+      fenetre.style.left = `${position.x}px`;
+      fenetre.style.top = `${position.y}px`;
+      mettreFenetreAuPremierPlan(fenetre);
+    }
+
+    function actualiserChoixRessourcesActivite(identifiantSelectionne = "") {
+      champRessourceActivite.replaceChildren();
+      const optionVide = document.createElement("option");
+      optionVide.value = "";
+      optionVide.textContent = ressourcesProjet.length
+        ? "Choisir une ressource"
+        : "Aucune ressource disponible";
+      champRessourceActivite.appendChild(optionVide);
+
+      [...ressourcesProjet]
+        .sort((a, b) => `${a.nom} ${a.discipline}`.localeCompare(
+          `${b.nom} ${b.discipline}`,
+          "fr",
+          { sensitivity: "base" }
+        ))
+        .forEach((ressource) => {
+          const option = document.createElement("option");
+          option.value = ressource.id;
+          option.textContent = `${ressource.nom} — ${ressource.discipline}`;
+          champRessourceActivite.appendChild(option);
+        });
+
+      champRessourceActivite.value = identifiantSelectionne;
+      boutonAjouterAffectation.disabled = ressourcesProjet.length === 0;
+    }
+
+    function actualiserListeAffectations(identifiantSelectionne = "") {
+      listeAffectations.replaceChildren();
+      if (!tacheDetails) return;
+
+      affectationsDetails.forEach((affectation) => {
+        const ressource = trouverRessource(affectation.ressourceId);
+        if (!ressource) return;
+        const option = document.createElement("option");
+        option.value = affectation.ressourceId;
+        option.textContent = `${ressource.nom} — ${ressource.discipline} — ${formatDuree(affectation.duree)} (${champUnite.value.trim() || "Un."})`;
+        listeAffectations.appendChild(option);
+      });
+
+      listeAffectations.value = identifiantSelectionne;
+      const selectionValide = Boolean(identifiantSelectionne);
+      boutonModifierAffectation.disabled = !selectionValide;
+      boutonRetirerAffectation.disabled = !selectionValide;
+    }
+
+    function selectionnerAffectationDansListe() {
+      if (!tacheDetails) return;
+      const affectation = affectationsDetails.find((element) => (
+        element.ressourceId === listeAffectations.value
+      ));
+      boutonModifierAffectation.disabled = !affectation;
+      boutonRetirerAffectation.disabled = !affectation;
+      if (!affectation) return;
+
+      champRessourceActivite.value = affectation.ressourceId;
+      champDureeRessource.value = String(affectation.duree);
+    }
+
+    function ajouterAffectation() {
+      if (!tacheDetails) return;
+      const saisie = lireSaisieAffectation();
+      if (!saisie) return;
+      if (affectationsDetails.some((element) => element.ressourceId === saisie.ressourceId)) {
+        window.alert("Cette ressource est déjà affectée à l’activité.");
+        return;
+      }
+
+      affectationsDetails.push(saisie);
+      actualiserListeAffectations(saisie.ressourceId);
+    }
+
+    function modifierAffectation() {
+      if (!tacheDetails) return;
+      const ancienIdentifiant = listeAffectations.value;
+      const saisie = lireSaisieAffectation();
+      if (!ancienIdentifiant || !saisie) return;
+      if (affectationsDetails.some((element) => (
+        element.ressourceId === saisie.ressourceId
+        && element.ressourceId !== ancienIdentifiant
+      ))) {
+        window.alert("Cette ressource est déjà affectée à l’activité.");
+        return;
+      }
+
+      const index = affectationsDetails.findIndex((element) => (
+        element.ressourceId === ancienIdentifiant
+      ));
+      if (index < 0) return;
+      affectationsDetails[index] = saisie;
+      actualiserListeAffectations(saisie.ressourceId);
+    }
+
+    function retirerAffectation() {
+      if (!tacheDetails || !listeAffectations.value) return;
+      const identifiant = listeAffectations.value;
+      affectationsDetails = affectationsDetails.filter((element) => (
+        element.ressourceId !== identifiant
+      ));
+      champDureeRessource.value = "";
+      actualiserChoixRessourcesActivite();
+      actualiserListeAffectations();
+    }
+
+    function lireSaisieAffectation() {
+      const ressourceId = champRessourceActivite.value;
+      const duree = Number(champDureeRessource.value);
+      if (!trouverRessource(ressourceId) || !Number.isFinite(duree) || duree <= 0) {
+        window.alert("Choisissez une ressource et indiquez une durée supérieure à zéro.");
+        return null;
+      }
+      if (tacheDetails && duree > Number(tacheDetails.dataset.duree)) {
+        window.alert(MESSAGE_DUREE_RESSOURCE);
+        return null;
+      }
+      return { ressourceId, duree };
+    }
+
+    function lireAffectationsTache(tache) {
+      try {
+        const donnees = JSON.parse(tache.dataset.ressources || "[]");
+        return Array.isArray(donnees) ? donnees : [];
+      } catch (erreur) {
+        return [];
+      }
+    }
+
+    function ouvrirGestionRessources() {
+      champNomRessource.value = "";
+      champDisciplineRessource.value = "";
+      actualiserListeRessources();
+      dialogueRessources.showModal();
+      champNomRessource.focus();
+    }
+
+    function actualiserListeRessources(identifiantSelectionne = "") {
+      listeRessources.replaceChildren();
+
+      [...ressourcesProjet]
+        .sort((a, b) => `${a.nom} ${a.discipline}`.localeCompare(
+          `${b.nom} ${b.discipline}`,
+          "fr",
+          { sensitivity: "base" }
+        ))
+        .forEach((ressource) => {
+          const option = document.createElement("option");
+          option.value = ressource.id;
+          option.textContent = `${ressource.nom} — ${ressource.discipline}`;
+          listeRessources.appendChild(option);
+        });
+
+      listeRessources.value = identifiantSelectionne;
+      const ressourceSelectionnee = trouverRessource(identifiantSelectionne);
+      boutonModifierRessource.disabled = !ressourceSelectionnee;
+      boutonSupprimerRessource.disabled = !ressourceSelectionnee;
+    }
+
+    function selectionnerRessourceDansListe() {
+      const ressource = trouverRessource(listeRessources.value);
+      boutonModifierRessource.disabled = !ressource;
+      boutonSupprimerRessource.disabled = !ressource;
+      if (!ressource) return;
+
+      champNomRessource.value = ressource.nom;
+      champDisciplineRessource.value = ressource.discipline;
+    }
+
+    function ajouterRessource() {
+      const valeurs = lireChampsRessource();
+      if (!valeurs) return;
+      if (ressourceExiste(valeurs.nom, valeurs.discipline)) {
+        window.alert("Ce couple Nom — Discipline existe déjà.");
+        return;
+      }
+
+      const ressource = { id: creerIdentifiantRessource(), ...valeurs };
+      ressourcesProjet.push(ressource);
+      enregistrerRessources();
+      actualiserListeRessources(ressource.id);
+    }
+
+    function modifierRessource() {
+      const ressource = trouverRessource(listeRessources.value);
+      const valeurs = lireChampsRessource();
+      if (!ressource || !valeurs) return;
+      if (ressourceExiste(valeurs.nom, valeurs.discipline, ressource.id)) {
+        window.alert("Ce couple Nom — Discipline existe déjà.");
+        return;
+      }
+
+      ressource.nom = valeurs.nom;
+      ressource.discipline = valeurs.discipline;
+      enregistrerRessources();
+      actualiserListeRessources(ressource.id);
+    }
+
+    function supprimerRessource() {
+      const ressource = trouverRessource(listeRessources.value);
+      if (!ressource) return;
+      const estAffectee = [...zoneTravail.querySelectorAll(".tache")].some((tache) => (
+        lireAffectationsTache(tache).some((affectation) => affectation.ressourceId === ressource.id)
+      ));
+      if (estAffectee) {
+        window.alert("Cette ressource est affectée à une activité et ne peut pas être supprimée.");
+        return;
+      }
+      if (!window.confirm(`Supprimer ${ressource.nom} — ${ressource.discipline} ?`)) return;
+
+      ressourcesProjet = ressourcesProjet.filter((element) => element.id !== ressource.id);
+      champNomRessource.value = "";
+      champDisciplineRessource.value = "";
+      enregistrerRessources();
+      actualiserListeRessources();
+    }
+
+    function lireChampsRessource() {
+      const nom = champNomRessource.value.trim();
+      const discipline = champDisciplineRessource.value.trim();
+      if (!nom || !discipline) {
+        window.alert("Renseignez le nom et la discipline.");
+        return null;
+      }
+      return { nom, discipline };
+    }
+
+    function trouverRessource(id) {
+      return ressourcesProjet.find((ressource) => ressource.id === id);
+    }
+
+    function ressourceExiste(nom, discipline, identifiantIgnore = "") {
+      const cle = creerCleRessource(nom, discipline);
+      return ressourcesProjet.some((ressource) => (
+        ressource.id !== identifiantIgnore
+        && creerCleRessource(ressource.nom, ressource.discipline) === cle
+      ));
+    }
+
+    function creerCleRessource(nom, discipline) {
+      return `${nom.trim()}\u0000${discipline.trim()}`.toLocaleLowerCase("fr");
+    }
+
+    function creerIdentifiantRessource() {
+      let numero = 1;
+      while (trouverRessource(`r${numero}`)) numero += 1;
+      return `r${numero}`;
+    }
+
+    function enregistrerRessources() {
+      try {
+        localStorage.setItem(CLE_CATALOGUE_RESSOURCES, JSON.stringify(ressourcesProjet));
+      } catch (erreur) {
+        // Le catalogue reste utilisable si le navigateur refuse le stockage local.
+      }
+      sauvegarderProjetLocal();
     }
 
     function creerTache(nom, duree, x, y, options = {}) {
@@ -768,6 +1332,7 @@
       tache.dataset.nom = nom;
       tache.dataset.objet = options.objet || "";
       tache.dataset.description = options.description || "";
+      tache.dataset.ressources = JSON.stringify(options.ressources || []);
       tache.innerHTML = `
         <div class="date-exterieure date-debut">
           <div class="ligne-date">
@@ -777,9 +1342,10 @@
             <input class="debut-tot" type="date" aria-label="Début au plus tôt">
           </div>
         </div>
+        <div class="ressources-exterieures" aria-label="Ressources affectées"></div>
         <div class="cadre-tache">
           <div class="entete-tache">
-            <button class="connecteur" type="button" title="Relier cette tâche" aria-label="Relier cette tâche à une autre"></button>
+            <button class="connecteur" type="button" title="Relier cette activité" aria-label="Relier cette activité à une autre"></button>
             <div class="nom-tache"></div>
           </div>
           <div class="objet-tache">
@@ -803,6 +1369,7 @@
       tache.querySelector(".nom-tache").textContent = nom;
       tache.querySelector(".texte-objet").textContent = tache.dataset.objet;
       afficherDuree(tache);
+      afficherRessourcesTache(tache);
 
       const gaucheDemandee = options.positionExacte ? x : x - LARGEUR_TACHE / 2;
       const hautDemande = options.positionExacte ? y : y - 41;
@@ -851,8 +1418,30 @@
       tache.querySelector(".duree-tache").textContent = `Durée : ${formatDuree(duree)} (${unite})`;
     }
 
+    function afficherRessourcesTache(tache) {
+      const conteneur = tache.querySelector(".ressources-exterieures");
+      if (!conteneur) return;
+      conteneur.replaceChildren();
+      const unite = champUnite.value.trim() || "Un.";
+
+      lireAffectationsTache(tache).forEach((affectation) => {
+        const ressource = trouverRessource(affectation.ressourceId);
+        if (!ressource) return;
+        const ligne = document.createElement("div");
+        ligne.className = "ressource-exterieure";
+        ligne.textContent = `${ressource.nom} — ${ressource.discipline} : ${formatDuree(affectation.duree)} (${unite})`;
+        conteneur.appendChild(ligne);
+      });
+
+      const hauteurEntete = Math.max(25, conteneur.scrollHeight + 4);
+      tache.style.paddingTop = `${hauteurEntete}px`;
+    }
+
     function actualiserUnite() {
-      document.querySelectorAll(".tache").forEach(afficherDuree);
+      document.querySelectorAll(".tache").forEach((tache) => {
+        afficherDuree(tache);
+        afficherRessourcesTache(tache);
+      });
       recalculerPlanning();
     }
 
@@ -877,6 +1466,7 @@
           tache.style.left = `${limiter(nouvelleGauche, 0, zoneTravail.clientWidth - tache.offsetWidth)}px`;
           tache.style.top = `${limiter(nouveauHaut, 0, zoneTravail.clientHeight - tache.offsetHeight)}px`;
           actualiserLiaisonsDe(tache);
+          if (tache === tacheEnEdition || tache === tacheDetails) repositionnerFenetresActivites();
         }
 
         function terminer() {
@@ -1260,18 +1850,17 @@
     }
 
     function enregistrerProjet() {
-      const projet = construireProjet();
-      const contenu = JSON.stringify(projet, null, 2);
-      const objetFichier = new Blob([contenu], { type: "application/json" });
-      const adresse = URL.createObjectURL(objetFichier);
-      const lien = document.createElement("a");
-      const dateDuJour = new Date().toISOString().slice(0, 10);
-      lien.href = adresse;
-      lien.download = `planning-${dateDuJour}.json`;
-      document.body.appendChild(lien);
-      lien.click();
-      lien.remove();
-      window.setTimeout(() => URL.revokeObjectURL(adresse), 1000);
+      try {
+        localStorage.setItem(CLE_SAUVEGARDE_LOCALE, JSON.stringify(construireProjet()));
+        boutonEnregistrerProjet.textContent = "Enregistré ✓";
+        boutonEnregistrerProjet.disabled = true;
+        window.setTimeout(() => {
+          boutonEnregistrerProjet.textContent = "Enregistrer";
+          boutonEnregistrerProjet.disabled = false;
+        }, 1400);
+      } catch (erreur) {
+        window.alert("L’enregistrement local a échoué. Vérifiez que le navigateur autorise le stockage pour cette page.");
+      }
     }
 
     function construireProjet() {
@@ -1280,11 +1869,13 @@
         format: "planning-reseau",
         version: 1,
         unite: champUnite.value.trim() || "Un.",
+        ressources: ressourcesProjet.map((ressource) => ({ ...ressource })),
         taches: taches.map((tache) => ({
           id: tache.dataset.id,
           nom: tache.dataset.nom,
           objet: tache.dataset.objet || "",
           description: tache.dataset.description || "",
+          ressources: lireAffectationsTache(tache),
           duree: Number(tache.dataset.duree),
           x: tache.offsetLeft,
           y: tache.offsetTop,
@@ -1298,11 +1889,48 @@
     }
 
     function sauvegarderProjetLocal() {
+      actualiserResumeRessources();
       try {
         localStorage.setItem(CLE_SAUVEGARDE_LOCALE, JSON.stringify(construireProjet()));
       } catch (erreur) {
         // Le planning reste utilisable si le navigateur refuse le stockage local.
       }
+    }
+
+    function actualiserResumeRessources() {
+      const dureesTotales = new Map();
+
+      zoneTravail.querySelectorAll(".tache").forEach((tache) => {
+        lireAffectationsTache(tache).forEach((affectation) => {
+          const total = (dureesTotales.get(affectation.ressourceId) || 0) + Number(affectation.duree);
+          dureesTotales.set(affectation.ressourceId, Number(total.toFixed(10)));
+        });
+      });
+
+      const unite = champUnite.value.trim() || "Un.";
+      const ressourcesUtilisees = ressourcesProjet
+        .filter((ressource) => dureesTotales.has(ressource.id))
+        .sort((a, b) => `${a.nom} ${a.discipline}`.localeCompare(
+          `${b.nom} ${b.discipline}`,
+          "fr",
+          { sensitivity: "base" }
+        ))
+        .map((ressource) => (
+          `${ressource.nom} — ${ressource.discipline} : ${formatDuree(dureesTotales.get(ressource.id))} (${unite})`
+        ));
+
+      if (!ressourcesUtilisees.length) {
+        resumeRessources.textContent = "Ressources utilisées : aucune";
+        return;
+      }
+
+      resumeRessources.replaceChildren("Ressources utilisées :");
+      ressourcesUtilisees.forEach((texte) => {
+        const ligne = document.createElement("span");
+        ligne.className = "resume-ressource";
+        ligne.textContent = texte;
+        resumeRessources.appendChild(ligne);
+      });
     }
 
     function preparerImpression() {
@@ -1356,6 +1984,7 @@
     }
 
     function afficherProjet(projet) {
+      ressourcesProjet = fusionnerRessources(projet.ressources, lireCatalogueRessourcesLocal());
       viderProjet();
       champUnite.value = projet.unite;
       const tachesParIdentifiant = new Map();
@@ -1365,6 +1994,7 @@
           id: donnees.id,
           objet: donnees.objet,
           description: donnees.description,
+          ressources: donnees.ressources,
           contrainteDebut: donnees.contrainteDebut,
           positionExacte: true,
           recalculer: false
@@ -1383,6 +2013,7 @@
       prochainIdentifiant = 1;
       while (tachesParIdentifiant.has(String(prochainIdentifiant))) prochainIdentifiant += 1;
       actualiserUnite();
+      enregistrerRessources();
     }
 
     async function chargerProjetDemonstration() {
@@ -1420,6 +2051,8 @@
         throw new Error("Format de projet invalide");
       }
 
+      const ressources = normaliserRessources(donnees.ressources);
+      const identifiantsRessources = new Set(ressources.map((ressource) => ressource.id));
       const identifiants = new Set();
       const taches = donnees.taches.map((tache) => {
         const id = String(tache.id);
@@ -1427,6 +2060,11 @@
         const objet = typeof tache.objet === "string" ? tache.objet.trim().slice(0, 160) : "";
         const description = typeof tache.description === "string" ? tache.description.trim() : "";
         const duree = Number(tache.duree);
+        const ressourcesAffectees = normaliserAffectationsRessources(
+          tache.ressources,
+          identifiantsRessources,
+          duree
+        );
         const x = Number(tache.x);
         const y = Number(tache.y);
         const contrainteDebut = typeof tache.contrainteDebut === "string"
@@ -1443,11 +2081,21 @@
           !Number.isFinite(y) ||
           (contrainteDebut && !lireDateLocale(contrainteDebut))
         ) {
-          throw new Error("Tâche invalide");
+          throw new Error("Activité invalide");
         }
 
         identifiants.add(id);
-        return { id, nom, objet, description, duree, x, y, contrainteDebut };
+        return {
+          id,
+          nom,
+          objet,
+          description,
+          ressources: ressourcesAffectees,
+          duree,
+          x,
+          y,
+          contrainteDebut
+        };
       });
 
       const liaisonsVues = new Set();
@@ -1493,7 +2141,85 @@
       const unite = typeof donnees.unite === "string" && donnees.unite.trim()
         ? donnees.unite.trim().slice(0, 8)
         : "Un.";
-      return { unite, taches, liaisons: liaisonsNormalisees };
+      return { unite, ressources, taches, liaisons: liaisonsNormalisees };
+    }
+
+    function normaliserAffectationsRessources(donnees, identifiantsRessources, dureeTache) {
+      if (donnees === undefined) return [];
+      if (!Array.isArray(donnees)) throw new Error("Affectations de ressources invalides");
+
+      const ressourcesVues = new Set();
+      return donnees.map((affectation) => {
+        const ressourceId = String(affectation.ressourceId || "").trim();
+        const duree = Number(affectation.duree);
+        if (
+          !identifiantsRessources.has(ressourceId)
+          || ressourcesVues.has(ressourceId)
+          || !Number.isFinite(duree)
+          || duree <= 0
+          || duree > dureeTache
+        ) {
+          throw new Error("Affectation de ressource invalide");
+        }
+
+        ressourcesVues.add(ressourceId);
+        return { ressourceId, duree };
+      });
+    }
+
+    function normaliserRessources(donnees) {
+      if (donnees === undefined) return [];
+      if (!Array.isArray(donnees)) throw new Error("Liste de ressources invalide");
+
+      const identifiants = new Set();
+      const couples = new Set();
+      return donnees.map((ressource) => {
+        const id = String(ressource.id || "").trim();
+        const nom = typeof ressource.nom === "string" ? ressource.nom.trim().slice(0, 80) : "";
+        const discipline = typeof ressource.discipline === "string"
+          ? ressource.discipline.trim().slice(0, 80)
+          : "";
+        const cle = creerCleRessource(nom, discipline);
+
+        if (!id || !nom || !discipline || identifiants.has(id) || couples.has(cle)) {
+          throw new Error("Ressource invalide");
+        }
+
+        identifiants.add(id);
+        couples.add(cle);
+        return { id, nom, discipline };
+      });
+    }
+
+    function lireCatalogueRessourcesLocal() {
+      try {
+        const contenu = localStorage.getItem(CLE_CATALOGUE_RESSOURCES);
+        return contenu ? normaliserRessources(JSON.parse(contenu)) : [];
+      } catch (erreur) {
+        return [];
+      }
+    }
+
+    function fusionnerRessources(ressourcesDuProjet, catalogueLocal) {
+      const resultat = ressourcesDuProjet.map((ressource) => ({ ...ressource }));
+      const couples = new Set(resultat.map((ressource) => (
+        creerCleRessource(ressource.nom, ressource.discipline)
+      )));
+
+      catalogueLocal.forEach((ressource) => {
+        const cle = creerCleRessource(ressource.nom, ressource.discipline);
+        if (couples.has(cle)) return;
+
+        let id = ressource.id;
+        let numero = 1;
+        while (resultat.some((element) => element.id === id)) {
+          id = `r${numero++}`;
+        }
+        resultat.push({ id, nom: ressource.nom, discipline: ressource.discipline });
+        couples.add(cle);
+      });
+
+      return resultat;
     }
 
     function viderProjet() {
