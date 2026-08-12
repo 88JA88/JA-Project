@@ -2,12 +2,45 @@
   "format": "planning-reseau",
   "version": 1,
   "unite": "j",
+  "ressources": [
+    {
+      "id": "r1",
+      "nom": "Res 2",
+      "discipline": "Discipline C"
+    },
+    {
+      "id": "r2",
+      "nom": "Res 3",
+      "discipline": "Discipline F"
+    },
+    {
+      "id": "r3",
+      "nom": "Res 1",
+      "discipline": "Discipline F"
+    },
+    {
+      "id": "r4",
+      "nom": "Res 4",
+      "discipline": "Discipline B"
+    },
+    {
+      "id": "r5",
+      "nom": "Res 5",
+      "discipline": "Discipline A"
+    }
+  ],
   "taches": [
     {
       "id": "1",
       "nom": "Recueil des données existantes",
       "objet": "Regrouper les arrêtés du 05/06/2022 et les normes dans Légifrance",
       "description": "",
+      "ressources": [
+        {
+          "ressourceId": "r3",
+          "duree": 3
+        }
+      ],
       "duree": 5,
       "x": 25,
       "y": 280,
@@ -16,8 +49,14 @@
     {
       "id": "2",
       "nom": "propositions des membres de l'équipe",
-      "objet": "",
+      "objet": "Interprétation de leurs activités à effectuer",
       "description": "",
+      "ressources": [
+        {
+          "ressourceId": "r1",
+          "duree": 2
+        }
+      ],
       "duree": 3,
       "x": 696,
       "y": 278,
@@ -28,6 +67,16 @@
       "nom": "Réunions sectorielles",
       "objet": "Objectifs et préparation",
       "description": "",
+      "ressources": [
+        {
+          "ressourceId": "r1",
+          "duree": 2
+        },
+        {
+          "ressourceId": "r2",
+          "duree": 1
+        }
+      ],
       "duree": 8,
       "x": 359,
       "y": 281,
@@ -36,8 +85,18 @@
     {
       "id": "4",
       "nom": "Répartition du travail",
-      "objet": "Assignations des tâches à effectuer",
+      "objet": "Assignations des activités à effectuer",
       "description": "",
+      "ressources": [
+        {
+          "ressourceId": "r1",
+          "duree": 2
+        },
+        {
+          "ressourceId": "r4",
+          "duree": 2
+        }
+      ],
       "duree": 4,
       "x": 357,
       "y": 2,
@@ -46,8 +105,22 @@
     {
       "id": "5",
       "nom": "Appels à contribution",
-      "objet": "",
+      "objet": "Recueillir des propositions de participation",
       "description": "",
+      "ressources": [
+        {
+          "ressourceId": "r1",
+          "duree": 2
+        },
+        {
+          "ressourceId": "r5",
+          "duree": 3
+        },
+        {
+          "ressourceId": "r3",
+          "duree": 1
+        }
+      ],
       "duree": 3,
       "x": 359,
       "y": 551,
