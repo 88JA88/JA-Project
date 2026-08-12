@@ -223,6 +223,11 @@
       outline-offset: 1px;
     }
 
+    .tache.selectionnee .cadre-tache {
+      outline: 3px solid #2877c7;
+      outline-offset: 1px;
+    }
+
     .entete-tache {
       display: flex;
       align-items: center;
@@ -556,7 +561,7 @@
       white-space: nowrap;
     }
 
-    #supprimer-liaison:disabled {
+    #supprimer-activite:disabled {
       opacity: 0.45;
       cursor: default;
     }
@@ -642,7 +647,7 @@
             <button id="imprimer-projet" class="bouton-barre" type="button">Imprimer</button>
             <input id="fichier-projet" type="file" accept="application/json,.json" hidden>
           </div>
-          <button id="supprimer-liaison" class="bouton-barre" type="button" disabled>Supprimer la liaison</button>
+          <button id="supprimer-activite" class="bouton-barre" type="button" disabled>Supprimer l’activité</button>
           <div class="parametre-unite">
             <label for="unite">Unité</label>
             <input id="unite" type="text" value="j" maxlength="8" autocomplete="off" spellcheck="false">
@@ -769,7 +774,7 @@
     const champUnite = document.querySelector("#unite");
     const boutonAnnuler = document.querySelector("#annuler");
     const boutonValiderTache = document.querySelector("#valider-tache");
-    const boutonSupprimerLiaison = document.querySelector("#supprimer-liaison");
+    const boutonSupprimerActivite = document.querySelector("#supprimer-activite");
     const boutonEnregistrerProjet = document.querySelector("#enregistrer-projet");
     const boutonOuvrirProjet = document.querySelector("#ouvrir-projet");
     const boutonImprimerProjet = document.querySelector("#imprimer-projet");
@@ -832,6 +837,7 @@
     let prochainIdentifiant = 1;
     let liaisons = [];
     let liaisonSelectionnee = null;
+    let activiteSelectionnee = null;
     let tacheEnEdition = null;
     let tacheDetails = null;
     let affectationsDetails = [];
@@ -897,7 +903,7 @@
       actualiserUnite();
     });
 
-    boutonSupprimerLiaison.addEventListener("click", supprimerLiaisonSelectionnee);
+    boutonSupprimerActivite.addEventListener("click", supprimerActiviteSelectionnee);
     boutonEnregistrerProjet.addEventListener("click", enregistrerProjet);
     boutonOuvrirProjet.addEventListener("click", () => fichierProjet.click());
     boutonImprimerProjet.addEventListener("click", () => window.print());
@@ -908,7 +914,9 @@
     zoneTravail.parentElement.addEventListener("scroll", repositionnerFenetresActivites);
 
     zoneTravail.addEventListener("click", (evenement) => {
-      if (evenement.target === zoneTravail) selectionnerLiaison(null);
+      if (evenement.target !== zoneTravail) return;
+      selectionnerLiaison(null);
+      selectionnerActivite(null);
     });
 
     document.addEventListener("keydown", (evenement) => {
@@ -1392,6 +1400,11 @@
           champDateDebut.click();
         }
       });
+      tache.addEventListener("click", (evenement) => {
+        if (evenement.target.closest("input, button")) return;
+        selectionnerLiaison(null);
+        selectionnerActivite(tache);
+      });
       tache.addEventListener("dblclick", (evenement) => {
         if (evenement.target.closest("input, button")) return;
         evenement.preventDefault();
@@ -1400,6 +1413,8 @@
       });
       tache.addEventListener("contextmenu", (evenement) => {
         evenement.preventDefault();
+        selectionnerLiaison(null);
+        selectionnerActivite(tache);
         ouvrirDetails(tache);
       });
       tache.addEventListener("pointerup", sauvegarderProjetLocal);
@@ -1549,6 +1564,7 @@
       const liaison = { source, cible, groupe, ligneVisible, ligneCible };
       ligneCible.addEventListener("click", (evenement) => {
         evenement.stopPropagation();
+        selectionnerActivite(null);
         selectionnerLiaison(liaison);
       });
 
@@ -1625,7 +1641,6 @@
       }
 
       liaisonSelectionnee = liaison;
-      boutonSupprimerLiaison.disabled = !liaison;
       if (ancienneLiaison) actualiserApparenceLiaison(ancienneLiaison);
 
       if (liaison) {
@@ -1652,7 +1667,41 @@
       liaisonSelectionnee.groupe.remove();
       liaisons = liaisons.filter((liaison) => liaison !== liaisonSelectionnee);
       liaisonSelectionnee = null;
-      boutonSupprimerLiaison.disabled = true;
+      recalculerPlanning();
+    }
+
+    function selectionnerActivite(tache) {
+      if (activiteSelectionnee) activiteSelectionnee.classList.remove("selectionnee");
+      activiteSelectionnee = tache;
+      if (activiteSelectionnee) activiteSelectionnee.classList.add("selectionnee");
+      boutonSupprimerActivite.disabled = !activiteSelectionnee;
+    }
+
+    function supprimerActiviteSelectionnee() {
+      if (!activiteSelectionnee) return;
+
+      const tache = activiteSelectionnee;
+      if (!window.confirm(`Supprimer l’activité « ${tache.dataset.nom} » ?`)) return;
+
+      selectionnerLiaison(null);
+      liaisons = liaisons.filter((liaison) => {
+        const estAssociee = liaison.source === tache || liaison.cible === tache;
+        if (estAssociee) liaison.groupe.remove();
+        return !estAssociee;
+      });
+
+      if (tacheEnEdition === tache) {
+        if (dialogue.open) dialogue.close();
+        tacheEnEdition = null;
+      }
+      if (tacheDetails === tache) {
+        if (dialogueDetails.open) dialogueDetails.close();
+        tacheDetails = null;
+        affectationsDetails = [];
+      }
+
+      tache.remove();
+      selectionnerActivite(null);
       recalculerPlanning();
     }
 
@@ -1850,17 +1899,19 @@
     }
 
     function enregistrerProjet() {
-      try {
-        localStorage.setItem(CLE_SAUVEGARDE_LOCALE, JSON.stringify(construireProjet()));
-        boutonEnregistrerProjet.textContent = "Enregistré ✓";
-        boutonEnregistrerProjet.disabled = true;
-        window.setTimeout(() => {
-          boutonEnregistrerProjet.textContent = "Enregistrer";
-          boutonEnregistrerProjet.disabled = false;
-        }, 1400);
-      } catch (erreur) {
-        window.alert("L’enregistrement local a échoué. Vérifiez que le navigateur autorise le stockage pour cette page.");
-      }
+      const contenu = JSON.stringify(construireProjet(), null, 2);
+      const objetFichier = new Blob([contenu], { type: "application/json" });
+      const adresse = URL.createObjectURL(objetFichier);
+      const lien = document.createElement("a");
+      const dateDuJour = new Date().toISOString().slice(0, 10);
+
+      sauvegarderProjetLocal();
+      lien.href = adresse;
+      lien.download = `planning-${dateDuJour}.json`;
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+      window.setTimeout(() => URL.revokeObjectURL(adresse), 1000);
     }
 
     function construireProjet() {
@@ -2224,6 +2275,7 @@
 
     function viderProjet() {
       selectionnerLiaison(null);
+      selectionnerActivite(null);
       liaisons.forEach((liaison) => liaison.groupe.remove());
       liaisons = [];
       zoneTravail.querySelectorAll(".tache").forEach((tache) => tache.remove());
