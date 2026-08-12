@@ -1,0 +1,83 @@
+{
+  "format": "planning-reseau",
+  "version": 1,
+  "unite": "j",
+  "taches": [
+    {
+      "id": "1",
+      "nom": "Recueil des données existantes",
+      "objet": "Regrouper les arrêtés du 05/06/2022 et les normes dans Légifrance",
+      "description": "",
+      "duree": 5,
+      "x": 25,
+      "y": 280,
+      "contrainteDebut": "2026-08-20"
+    },
+    {
+      "id": "2",
+      "nom": "propositions des membres de l'équipe",
+      "objet": "",
+      "description": "",
+      "duree": 3,
+      "x": 696,
+      "y": 278,
+      "contrainteDebut": ""
+    },
+    {
+      "id": "3",
+      "nom": "Réunions sectorielles",
+      "objet": "Objectifs et préparation",
+      "description": "",
+      "duree": 8,
+      "x": 359,
+      "y": 281,
+      "contrainteDebut": ""
+    },
+    {
+      "id": "4",
+      "nom": "Répartition du travail",
+      "objet": "Assignations des tâches à effectuer",
+      "description": "",
+      "duree": 4,
+      "x": 357,
+      "y": 2,
+      "contrainteDebut": ""
+    },
+    {
+      "id": "5",
+      "nom": "Appels à contribution",
+      "objet": "",
+      "description": "",
+      "duree": 3,
+      "x": 359,
+      "y": 551,
+      "contrainteDebut": ""
+    }
+  ],
+  "liaisons": [
+    {
+      "source": "1",
+      "cible": "3"
+    },
+    {
+      "source": "1",
+      "cible": "4"
+    },
+    {
+      "source": "4",
+      "cible": "2"
+    },
+    {
+      "source": "3",
+      "cible": "2"
+    },
+    {
+      "source": "1",
+      "cible": "5"
+    },
+    {
+      "source": "5",
+      "cible": "2"
+    }
+  ]
+}

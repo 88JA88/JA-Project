@@ -1,0 +1,1515 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Planning — Réseau de tâches</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #e7e9ec;
+      color: #1f2933;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .barre-superieure {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 58px;
+      padding: 0 22px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #c7ccd1;
+      box-shadow: 0 1px 4px rgb(31 41 51 / 8%);
+    }
+
+    .barre-superieure h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    .aide {
+      margin: 0;
+      color: #64717d;
+      font-size: 13px;
+    }
+
+    .outils {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .actions-projet {
+      display: flex;
+      gap: 7px;
+    }
+
+    .parametre-unite {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .parametre-unite label {
+      margin: 0;
+      color: #4d5964;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    #unite {
+      width: 62px;
+      height: 32px;
+      margin: 0;
+      padding: 5px 8px;
+      text-align: center;
+    }
+
+    .cadre-travail {
+      flex: 1;
+      overflow: auto;
+      background: #dfe3e7;
+    }
+
+    #zone-travail {
+      position: relative;
+      width: 2600px;
+      height: 1700px;
+      background-color: #fbfbfa;
+      background-image:
+        linear-gradient(#edf0f2 1px, transparent 1px),
+        linear-gradient(90deg, #edf0f2 1px, transparent 1px);
+      background-size: 24px 24px;
+      cursor: crosshair;
+    }
+
+    #couche-liaisons {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .liaison-visible {
+      stroke: #56636f;
+      stroke-width: 2;
+      pointer-events: none;
+    }
+
+    .liaison-cible {
+      stroke: transparent;
+      stroke-width: 14;
+      cursor: pointer;
+      pointer-events: stroke;
+    }
+
+    .liaison-critique .liaison-visible {
+      stroke: #b42318;
+      stroke-width: 3;
+    }
+
+    .liaison-selectionnee .liaison-visible {
+      stroke: #2877c7;
+      stroke-width: 3;
+    }
+
+    .liaison-apercu {
+      stroke: #2877c7;
+      stroke-width: 2;
+      stroke-dasharray: 7 5;
+      pointer-events: none;
+    }
+
+    .tache {
+      position: absolute;
+      z-index: 1;
+      width: 200px;
+      padding: 25px 0;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .cadre-tache {
+      position: relative;
+      padding: 9px 10px 8px;
+      border: 1px solid #6f7c88;
+      border-radius: 7px;
+      background: #fff;
+      box-shadow: 0 3px 9px rgb(31 41 51 / 14%);
+    }
+
+    .connecteur {
+      flex: 0 0 auto;
+      width: 14px;
+      min-width: 0;
+      height: 14px;
+      padding: 0;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      background: #3275c7;
+      box-shadow: 0 0 0 1px #2867b2;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .connecteur:hover {
+      background: #1f5fa9;
+    }
+
+    .tache:active {
+      cursor: grabbing;
+    }
+
+    .tache.en-deplacement {
+      z-index: 2;
+    }
+
+    .tache.en-deplacement .cadre-tache {
+      box-shadow: 0 7px 18px rgb(31 41 51 / 22%);
+    }
+
+    .tache.critique .cadre-tache {
+      outline: 3px solid #b42318;
+      outline-offset: 1px;
+    }
+
+    .entete-tache {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 5px;
+    }
+
+    .nom-tache {
+      overflow-wrap: anywhere;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.25;
+      text-transform: uppercase;
+    }
+
+    .duree-tache {
+      color: #111;
+      font-size: 12px;
+    }
+
+    .objet-tache {
+      margin-bottom: 6px;
+    }
+
+    .libelle-objet {
+      margin-bottom: 2px;
+      color: #111;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .texte-objet {
+      min-height: 31px;
+      max-height: 31px;
+      padding: 3px 5px;
+      overflow: hidden;
+      border: 1px solid #cdd3d8;
+      border-radius: 4px;
+      background: #fafbfb;
+      color: #111;
+      font-size: 12px;
+      line-height: 1.15;
+      white-space: pre-wrap;
+    }
+
+    .indicateurs-tache {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .date-exterieure {
+      position: absolute;
+      width: 155px;
+      color: #111;
+      font-size: 12px;
+    }
+
+    .date-debut {
+      top: 0;
+      left: 0;
+    }
+
+    .date-fin {
+      right: 0;
+      bottom: 0;
+    }
+
+    .ligne-date {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .date-fin .ligne-date {
+      justify-content: flex-end;
+    }
+
+    .icone-calendrier {
+      position: relative;
+      display: inline-block;
+      flex: 0 0 auto;
+      width: 13px;
+      height: 12px;
+      border: 1.5px solid #111;
+      border-radius: 2px;
+    }
+
+    .icone-calendrier::before {
+      position: absolute;
+      top: 2px;
+      right: -1.5px;
+      left: -1.5px;
+      border-top: 1.5px solid #111;
+      content: "";
+    }
+
+    .ouvrir-calendrier {
+      width: 15px;
+      min-width: 0;
+      height: 18px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+    }
+
+    .date-exterieure.contrainte-active {
+      color: #b42318;
+    }
+
+    .debut-tot,
+    .fin-tard {
+      height: 18px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #111;
+      font-size: 12px;
+      user-select: auto;
+    }
+
+    .ligne-date input {
+      width: 130px;
+    }
+
+    .ligne-date input::-webkit-calendar-picker-indicator {
+      display: none;
+      -webkit-appearance: none;
+    }
+
+    .fin-tard {
+      color: #111;
+    }
+
+    .debut-tot.avec-contrainte {
+      color: #b42318;
+      font-weight: 700;
+    }
+
+    .marge-totale {
+      color: #111;
+      font-size: 12px;
+    }
+
+    dialog {
+      width: min(390px, calc(100vw - 32px));
+      padding: 0;
+      border: 0;
+      border-radius: 12px;
+      background: #fff;
+      color: #1f2933;
+      box-shadow: 0 24px 70px rgb(20 28 35 / 30%);
+    }
+
+    dialog::backdrop {
+      background: rgb(31 41 51 / 35%);
+    }
+
+    form {
+      padding: 24px;
+    }
+
+    form h2 {
+      margin: 0 0 21px;
+      font-size: 19px;
+    }
+
+    label {
+      display: block;
+      margin: 0 0 7px;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      margin: 0 0 17px;
+      padding: 8px 10px;
+      border: 1px solid #aab2b9;
+      border-radius: 6px;
+      background: #fff;
+      color: #1f2933;
+      font: inherit;
+    }
+
+    input {
+      height: 40px;
+    }
+
+    textarea {
+      min-height: 58px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #3275c7;
+      outline: 3px solid rgb(50 117 199 / 18%);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 9px;
+      margin-top: 7px;
+    }
+
+    .calcul-en-attente {
+      margin: 0 0 14px;
+      color: #4d5964;
+      font-size: 13px;
+    }
+
+    .calcul-en-attente strong {
+      color: #1f2933;
+    }
+
+    button {
+      min-width: 92px;
+      height: 38px;
+      padding: 0 15px;
+      border: 1px solid #aab2b9;
+      border-radius: 7px;
+      background: #f7f8f9;
+      color: #26323c;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    button[type="submit"] {
+      border-color: #2867b2;
+      background: #3275c7;
+      color: #fff;
+    }
+
+    .bouton-barre {
+      min-width: auto;
+      height: 32px;
+      padding: 0 11px;
+      white-space: nowrap;
+    }
+
+    #supprimer-liaison:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    @page {
+      size: 297mm 210mm;
+      margin: 10mm;
+    }
+
+    @media print {
+      html,
+      body {
+        width: 277mm !important;
+        height: 190mm !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        background: #fff;
+      }
+
+      body {
+        display: block;
+      }
+
+      .barre-superieure {
+        display: none;
+      }
+
+      .cadre-travail {
+        position: relative;
+        width: 277mm !important;
+        height: 190mm !important;
+        overflow: visible !important;
+        background: #fff;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      #zone-travail {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: #fff;
+        transform: translate(
+          var(--impression-x, 0),
+          var(--impression-y, 0)
+        ) scale(var(--impression-echelle, 1));
+        transform-origin: top left;
+      }
+
+      .cadre-tache {
+        box-shadow: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .barre-superieure {
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+        min-height: 92px;
+      }
+
+      .outils {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="barre-superieure">
+    <h1>Planning — Réseau de tâches</h1>
+    <div class="outils">
+      <p class="aide">Double-cliquez dans le vide pour créer, ou sur une tâche pour la modifier.</p>
+      <div class="actions-projet">
+        <button id="enregistrer-projet" class="bouton-barre" type="button">Enregistrer</button>
+        <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
+        <button id="imprimer-projet" class="bouton-barre" type="button">Imprimer</button>
+        <input id="fichier-projet" type="file" accept="application/json,.json" hidden>
+      </div>
+      <button id="supprimer-liaison" class="bouton-barre" type="button" disabled>Supprimer la liaison</button>
+      <div class="parametre-unite">
+        <label for="unite">Unité</label>
+        <input id="unite" type="text" value="j" maxlength="8" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+  </header>
+
+  <main class="cadre-travail">
+    <div id="zone-travail" aria-label="Zone de travail du planning">
+      <svg id="couche-liaisons" aria-hidden="true">
+        <defs>
+          <marker id="fleche" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+            <path d="M 0 0 L 8 4 L 0 8 Z" fill="#56636f"></path>
+          </marker>
+          <marker id="fleche-selectionnee" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+            <path d="M 0 0 L 8 4 L 0 8 Z" fill="#2877c7"></path>
+          </marker>
+          <marker id="fleche-critique" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+            <path d="M 0 0 L 8 4 L 0 8 Z" fill="#b42318"></path>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+  </main>
+
+  <dialog id="dialogue-tache">
+    <form id="formulaire-tache">
+      <h2 id="titre-dialogue">Nouvelle tâche</h2>
+
+      <label for="nom">Nom de la tâche</label>
+      <input id="nom" name="nom" type="text" maxlength="80" required autocomplete="off">
+
+      <label for="objet">Objet</label>
+      <textarea id="objet" name="objet" rows="2" maxlength="160"></textarea>
+
+      <label for="duree">Durée</label>
+      <input id="duree" name="duree" type="number" min="0.1" step="0.1" required inputmode="decimal">
+
+      <div class="actions">
+        <button id="annuler" type="button">Annuler</button>
+        <button id="valider-tache" type="submit">Créer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialogue-details">
+    <form id="formulaire-details">
+      <h2 id="titre-details"></h2>
+
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="5"></textarea>
+
+      <p class="calcul-en-attente"><strong>Ressources :</strong> En attente</p>
+      <p class="calcul-en-attente"><strong>Coût :</strong> En attente</p>
+
+      <div class="actions">
+        <button id="annuler-details" type="button">Annuler</button>
+        <button type="submit">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    "use strict";
+
+    const zoneTravail = document.querySelector("#zone-travail");
+    const coucheLiaisons = document.querySelector("#couche-liaisons");
+    const dialogue = document.querySelector("#dialogue-tache");
+    const formulaire = document.querySelector("#formulaire-tache");
+    const titreDialogue = document.querySelector("#titre-dialogue");
+    const champNom = document.querySelector("#nom");
+    const champObjet = document.querySelector("#objet");
+    const champDuree = document.querySelector("#duree");
+    const champUnite = document.querySelector("#unite");
+    const boutonAnnuler = document.querySelector("#annuler");
+    const boutonValiderTache = document.querySelector("#valider-tache");
+    const boutonSupprimerLiaison = document.querySelector("#supprimer-liaison");
+    const boutonEnregistrerProjet = document.querySelector("#enregistrer-projet");
+    const boutonOuvrirProjet = document.querySelector("#ouvrir-projet");
+    const boutonImprimerProjet = document.querySelector("#imprimer-projet");
+    const fichierProjet = document.querySelector("#fichier-projet");
+    const dialogueDetails = document.querySelector("#dialogue-details");
+    const formulaireDetails = document.querySelector("#formulaire-details");
+    const titreDetails = document.querySelector("#titre-details");
+    const champDescription = document.querySelector("#description");
+    const boutonAnnulerDetails = document.querySelector("#annuler-details");
+
+    const LARGEUR_TACHE = 200;
+    const MILLISECONDES_PAR_MINUTE = 60 * 1000;
+    const MILLISECONDES_PAR_HEURE = 60 * MILLISECONDES_PAR_MINUTE;
+    const MILLISECONDES_PAR_JOUR = 24 * MILLISECONDES_PAR_HEURE;
+    const CLE_SAUVEGARDE_LOCALE = "planning-reseau-sauvegarde-automatique";
+    const PROJET_DEMONSTRATION = {
+      format: "planning-reseau",
+      version: 1,
+      unite: "j",
+      taches: [
+        { id: "1", nom: "e1", duree: 5, x: 4, y: 259, contrainteDebut: "2026-08-20T19:34" },
+        { id: "2", nom: "e2", duree: 3, x: 651, y: 276, contrainteDebut: "" },
+        { id: "3", nom: "e3", duree: 8, x: 359, y: 281, contrainteDebut: "" },
+        { id: "4", nom: "e5", duree: 4, x: 357, y: 2, contrainteDebut: "" },
+        { id: "5", nom: "e6", duree: 3, x: 359, y: 551, contrainteDebut: "" }
+      ],
+      liaisons: [
+        { source: "1", cible: "3" },
+        { source: "1", cible: "4" },
+        { source: "4", cible: "2" },
+        { source: "3", cible: "2" },
+        { source: "1", cible: "5" },
+        { source: "5", cible: "2" }
+      ]
+    };
+    let positionCreation = { x: 0, y: 0 };
+    let prochainIdentifiant = 1;
+    let liaisons = [];
+    let liaisonSelectionnee = null;
+    let tacheEnEdition = null;
+    let tacheDetails = null;
+
+    zoneTravail.addEventListener("dblclick", (evenement) => {
+      if (evenement.target !== zoneTravail) return;
+
+      const rectangle = zoneTravail.getBoundingClientRect();
+      positionCreation = {
+        x: evenement.clientX - rectangle.left,
+        y: evenement.clientY - rectangle.top
+      };
+
+      ouvrirFormulaireCreation();
+    });
+
+    boutonAnnuler.addEventListener("click", () => {
+      dialogue.close();
+    });
+
+    boutonAnnulerDetails.addEventListener("click", () => {
+      dialogueDetails.close();
+    });
+
+    formulaireDetails.addEventListener("submit", (evenement) => {
+      evenement.preventDefault();
+      if (!tacheDetails) return;
+
+      tacheDetails.dataset.description = champDescription.value.trim();
+      sauvegarderProjetLocal();
+      dialogueDetails.close();
+    });
+
+    champUnite.addEventListener("input", actualiserUnite);
+
+    champUnite.addEventListener("blur", () => {
+      if (!champUnite.value.trim()) champUnite.value = "Un.";
+      actualiserUnite();
+    });
+
+    boutonSupprimerLiaison.addEventListener("click", supprimerLiaisonSelectionnee);
+    boutonEnregistrerProjet.addEventListener("click", enregistrerProjet);
+    boutonOuvrirProjet.addEventListener("click", () => fichierProjet.click());
+    boutonImprimerProjet.addEventListener("click", () => window.print());
+    fichierProjet.addEventListener("change", ouvrirProjet);
+    window.addEventListener("beforeprint", preparerImpression);
+
+    zoneTravail.addEventListener("click", (evenement) => {
+      if (evenement.target === zoneTravail) selectionnerLiaison(null);
+    });
+
+    document.addEventListener("keydown", (evenement) => {
+      if (evenement.key !== "Delete" && evenement.key !== "Backspace") return;
+      if (dialogue.open || evenement.target instanceof HTMLInputElement) return;
+      if (!liaisonSelectionnee) return;
+
+      evenement.preventDefault();
+      supprimerLiaisonSelectionnee();
+    });
+
+    formulaire.addEventListener("submit", (evenement) => {
+      evenement.preventDefault();
+
+      const nom = champNom.value.trim();
+      const objet = champObjet.value.trim();
+      const duree = Number(champDuree.value);
+      if (!nom || !Number.isFinite(duree) || duree <= 0) return;
+
+      if (tacheEnEdition) {
+        tacheEnEdition.dataset.nom = nom;
+        tacheEnEdition.dataset.objet = objet;
+        tacheEnEdition.dataset.duree = String(duree);
+        tacheEnEdition.querySelector(".nom-tache").textContent = nom;
+        tacheEnEdition.querySelector(".texte-objet").textContent = objet;
+        afficherDuree(tacheEnEdition);
+        actualiserLiaisonsDe(tacheEnEdition);
+        recalculerPlanning();
+      } else {
+        creerTache(nom, duree, positionCreation.x, positionCreation.y, { objet });
+      }
+
+      dialogue.close();
+    });
+
+    function ouvrirFormulaireCreation() {
+      tacheEnEdition = null;
+      titreDialogue.textContent = "Nouvelle tâche";
+      boutonValiderTache.textContent = "Créer";
+      formulaire.reset();
+      dialogue.showModal();
+      champNom.focus();
+    }
+
+    function ouvrirFormulaireEdition(tache) {
+      tacheEnEdition = tache;
+      titreDialogue.textContent = "Modifier la tâche";
+      boutonValiderTache.textContent = "Enregistrer";
+      champNom.value = tache.dataset.nom;
+      champObjet.value = tache.dataset.objet || "";
+      champDuree.value = tache.dataset.duree;
+      dialogue.showModal();
+      champNom.focus();
+      champNom.select();
+    }
+
+    function ouvrirDetails(tache) {
+      tacheDetails = tache;
+      titreDetails.textContent = tache.dataset.nom;
+      champDescription.value = tache.dataset.description || "";
+      dialogueDetails.showModal();
+      champDescription.focus();
+    }
+
+    function creerTache(nom, duree, x, y, options = {}) {
+      const tache = document.createElement("div");
+      tache.className = "tache";
+      tache.dataset.id = options.id === undefined
+        ? String(prochainIdentifiant++)
+        : String(options.id);
+      tache.dataset.nom = nom;
+      tache.dataset.objet = options.objet || "";
+      tache.dataset.description = options.description || "";
+      tache.innerHTML = `
+        <div class="date-exterieure date-debut">
+          <div class="ligne-date">
+            <button class="ouvrir-calendrier" type="button" aria-label="Choisir la date de début au plus tôt">
+              <span class="icone-calendrier" aria-hidden="true"></span>
+            </button>
+            <input class="debut-tot" type="date" aria-label="Début au plus tôt">
+          </div>
+        </div>
+        <div class="cadre-tache">
+          <div class="entete-tache">
+            <button class="connecteur" type="button" title="Relier cette tâche" aria-label="Relier cette tâche à une autre"></button>
+            <div class="nom-tache"></div>
+          </div>
+          <div class="objet-tache">
+            <div class="libelle-objet">Objet :</div>
+            <div class="texte-objet"></div>
+          </div>
+          <div class="indicateurs-tache">
+            <div class="duree-tache"></div>
+            <div class="marge-totale">Marge totale : —</div>
+          </div>
+        </div>
+        <div class="date-exterieure date-fin">
+          <div class="ligne-date">
+            <input class="fin-tard" type="date" aria-label="Fin au plus tard" readonly tabindex="-1">
+          </div>
+        </div>
+      `;
+
+      tache.dataset.duree = String(duree);
+      tache.dataset.contrainteDebut = options.contrainteDebut || "";
+      tache.querySelector(".nom-tache").textContent = nom;
+      tache.querySelector(".texte-objet").textContent = tache.dataset.objet;
+      afficherDuree(tache);
+
+      const gaucheDemandee = options.positionExacte ? x : x - LARGEUR_TACHE / 2;
+      const hautDemande = options.positionExacte ? y : y - 41;
+      const gauche = limiter(gaucheDemandee, 0, zoneTravail.clientWidth - LARGEUR_TACHE);
+      tache.style.left = `${gauche}px`;
+      tache.style.top = `${Math.max(0, hautDemande)}px`;
+
+      activerDeplacement(tache);
+      activerCreationLiaison(tache, tache.querySelector(".connecteur"));
+      const champDateDebut = tache.querySelector(".debut-tot");
+      champDateDebut.addEventListener("change", (evenement) => {
+        tache.dataset.contrainteDebut = evenement.target.value;
+        recalculerPlanning();
+      });
+      tache.querySelector(".ouvrir-calendrier").addEventListener("click", () => {
+        if (typeof champDateDebut.showPicker === "function") {
+          champDateDebut.showPicker();
+        } else {
+          champDateDebut.focus();
+          champDateDebut.click();
+        }
+      });
+      tache.addEventListener("dblclick", (evenement) => {
+        if (evenement.target.closest("input, button")) return;
+        evenement.preventDefault();
+        evenement.stopPropagation();
+        ouvrirFormulaireEdition(tache);
+      });
+      tache.addEventListener("contextmenu", (evenement) => {
+        evenement.preventDefault();
+        ouvrirDetails(tache);
+      });
+      tache.addEventListener("pointerup", sauvegarderProjetLocal);
+      zoneTravail.appendChild(tache);
+      if (options.recalculer !== false) recalculerPlanning();
+      return tache;
+    }
+
+    function formatDuree(duree) {
+      return Number.isInteger(duree) ? String(duree) : String(duree).replace(".", ",");
+    }
+
+    function afficherDuree(tache) {
+      const duree = Number(tache.dataset.duree);
+      const unite = champUnite.value.trim() || "Un.";
+      tache.querySelector(".duree-tache").textContent = `Durée : ${formatDuree(duree)} (${unite})`;
+    }
+
+    function actualiserUnite() {
+      document.querySelectorAll(".tache").forEach(afficherDuree);
+      recalculerPlanning();
+    }
+
+    function activerDeplacement(tache) {
+      tache.addEventListener("pointerdown", (evenement) => {
+        if (evenement.button !== 0) return;
+        if (evenement.target.closest("input, button")) return;
+
+        evenement.preventDefault();
+        tache.setPointerCapture(evenement.pointerId);
+        tache.classList.add("en-deplacement");
+
+        const debutX = evenement.clientX;
+        const debutY = evenement.clientY;
+        const gaucheInitiale = tache.offsetLeft;
+        const hautInitial = tache.offsetTop;
+
+        function deplacer(evenementMouvement) {
+          const nouvelleGauche = gaucheInitiale + evenementMouvement.clientX - debutX;
+          const nouveauHaut = hautInitial + evenementMouvement.clientY - debutY;
+
+          tache.style.left = `${limiter(nouvelleGauche, 0, zoneTravail.clientWidth - tache.offsetWidth)}px`;
+          tache.style.top = `${limiter(nouveauHaut, 0, zoneTravail.clientHeight - tache.offsetHeight)}px`;
+          actualiserLiaisonsDe(tache);
+        }
+
+        function terminer() {
+          tache.classList.remove("en-deplacement");
+          tache.removeEventListener("pointermove", deplacer);
+          tache.removeEventListener("pointerup", terminer);
+          tache.removeEventListener("pointercancel", terminer);
+        }
+
+        tache.addEventListener("pointermove", deplacer);
+        tache.addEventListener("pointerup", terminer);
+        tache.addEventListener("pointercancel", terminer);
+      });
+    }
+
+    function activerCreationLiaison(tache, connecteur) {
+      connecteur.addEventListener("pointerdown", (evenement) => {
+        if (evenement.button !== 0) return;
+
+        evenement.preventDefault();
+        evenement.stopPropagation();
+        selectionnerLiaison(null);
+
+        const apercu = creerLigne("liaison-apercu");
+        apercu.setAttribute("marker-end", "url(#fleche-selectionnee)");
+        coucheLiaisons.appendChild(apercu);
+
+        const cadre = tache.querySelector(".cadre-tache");
+        const departX = tache.offsetLeft + cadre.offsetLeft + connecteur.offsetLeft + connecteur.offsetWidth / 2;
+        const departY = tache.offsetTop + cadre.offsetTop + connecteur.offsetTop + connecteur.offsetHeight / 2;
+        placerLigne(apercu, departX, departY, departX, departY);
+
+        function dessiner(evenementMouvement) {
+          const rectangle = zoneTravail.getBoundingClientRect();
+          const x = evenementMouvement.clientX - rectangle.left;
+          const y = evenementMouvement.clientY - rectangle.top;
+          placerLigne(apercu, departX, departY, x, y);
+        }
+
+        function terminer(evenementFin) {
+          const elementVise = document.elementFromPoint(evenementFin.clientX, evenementFin.clientY);
+          const tacheCible = elementVise ? elementVise.closest(".tache") : null;
+
+          apercu.remove();
+          window.removeEventListener("pointermove", dessiner);
+          window.removeEventListener("pointerup", terminer);
+          window.removeEventListener("pointercancel", annuler);
+
+          if (tacheCible && tacheCible !== tache) creerLiaison(tache, tacheCible);
+        }
+
+        function annuler() {
+          apercu.remove();
+          window.removeEventListener("pointermove", dessiner);
+          window.removeEventListener("pointerup", terminer);
+          window.removeEventListener("pointercancel", annuler);
+        }
+
+        window.addEventListener("pointermove", dessiner);
+        window.addEventListener("pointerup", terminer);
+        window.addEventListener("pointercancel", annuler);
+      });
+    }
+
+    function creerLiaison(source, cible, recalculer = true) {
+      const existeDeja = liaisons.some((liaison) => liaison.source === source && liaison.cible === cible);
+      if (existeDeja) return;
+      if (creeraitCycle(source, cible)) {
+        window.alert("Cette liaison créerait un cycle dans le réseau.");
+        return;
+      }
+
+      const groupe = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      const ligneVisible = creerLigne("liaison-visible");
+      const ligneCible = creerLigne("liaison-cible");
+      ligneVisible.setAttribute("marker-end", "url(#fleche)");
+      groupe.append(ligneVisible, ligneCible);
+      coucheLiaisons.appendChild(groupe);
+
+      const liaison = { source, cible, groupe, ligneVisible, ligneCible };
+      ligneCible.addEventListener("click", (evenement) => {
+        evenement.stopPropagation();
+        selectionnerLiaison(liaison);
+      });
+
+      liaisons.push(liaison);
+      actualiserLiaison(liaison);
+      if (recalculer) recalculerPlanning();
+    }
+
+    function creerLigne(classe) {
+      const ligne = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      ligne.setAttribute("class", classe);
+      ligne.setAttribute("vector-effect", "non-scaling-stroke");
+      return ligne;
+    }
+
+    function placerLigne(ligne, x1, y1, x2, y2) {
+      ligne.setAttribute("x1", x1);
+      ligne.setAttribute("y1", y1);
+      ligne.setAttribute("x2", x2);
+      ligne.setAttribute("y2", y2);
+    }
+
+    function actualiserLiaison(liaison) {
+      const centreSource = centreTache(liaison.source);
+      const centreCible = centreTache(liaison.cible);
+      const cadreSource = liaison.source.querySelector(".cadre-tache");
+      const cadreCible = liaison.cible.querySelector(".cadre-tache");
+      const centresConfondus = centreSource.x === centreCible.x && centreSource.y === centreCible.y;
+      const depart = centresConfondus
+        ? { x: centreSource.x + cadreSource.offsetWidth / 2, y: centreSource.y }
+        : pointSurBord(liaison.source, centreCible);
+      const arrivee = centresConfondus
+        ? { x: centreCible.x - cadreCible.offsetWidth / 2, y: centreCible.y }
+        : pointSurBord(liaison.cible, centreSource);
+
+      placerLigne(liaison.ligneVisible, depart.x, depart.y, arrivee.x, arrivee.y);
+      placerLigne(liaison.ligneCible, depart.x, depart.y, arrivee.x, arrivee.y);
+    }
+
+    function actualiserLiaisonsDe(tache) {
+      liaisons.forEach((liaison) => {
+        if (liaison.source === tache || liaison.cible === tache) actualiserLiaison(liaison);
+      });
+    }
+
+    function centreTache(tache) {
+      const cadre = tache.querySelector(".cadre-tache");
+      return {
+        x: tache.offsetLeft + cadre.offsetLeft + cadre.offsetWidth / 2,
+        y: tache.offsetTop + cadre.offsetTop + cadre.offsetHeight / 2
+      };
+    }
+
+    function pointSurBord(tache, pointVise) {
+      const cadre = tache.querySelector(".cadre-tache");
+      const centre = centreTache(tache);
+      const dx = pointVise.x - centre.x;
+      const dy = pointVise.y - centre.y;
+      const facteurX = dx === 0 ? Infinity : (cadre.offsetWidth / 2) / Math.abs(dx);
+      const facteurY = dy === 0 ? Infinity : (cadre.offsetHeight / 2) / Math.abs(dy);
+      const facteur = Math.min(facteurX, facteurY);
+
+      return {
+        x: centre.x + dx * facteur,
+        y: centre.y + dy * facteur
+      };
+    }
+
+    function selectionnerLiaison(liaison) {
+      const ancienneLiaison = liaisonSelectionnee;
+
+      if (ancienneLiaison) {
+        ancienneLiaison.groupe.classList.remove("liaison-selectionnee");
+      }
+
+      liaisonSelectionnee = liaison;
+      boutonSupprimerLiaison.disabled = !liaison;
+      if (ancienneLiaison) actualiserApparenceLiaison(ancienneLiaison);
+
+      if (liaison) {
+        liaison.groupe.classList.add("liaison-selectionnee");
+        actualiserApparenceLiaison(liaison);
+      }
+    }
+
+    function actualiserApparenceLiaison(liaison) {
+      let marqueur = "url(#fleche)";
+
+      if (liaison === liaisonSelectionnee) {
+        marqueur = "url(#fleche-selectionnee)";
+      } else if (liaison.groupe.classList.contains("liaison-critique")) {
+        marqueur = "url(#fleche-critique)";
+      }
+
+      liaison.ligneVisible.setAttribute("marker-end", marqueur);
+    }
+
+    function supprimerLiaisonSelectionnee() {
+      if (!liaisonSelectionnee) return;
+
+      liaisonSelectionnee.groupe.remove();
+      liaisons = liaisons.filter((liaison) => liaison !== liaisonSelectionnee);
+      liaisonSelectionnee = null;
+      boutonSupprimerLiaison.disabled = true;
+      recalculerPlanning();
+    }
+
+    function creeraitCycle(source, cible) {
+      const aVisiter = [cible];
+      const visites = new Set();
+
+      while (aVisiter.length) {
+        const tache = aVisiter.pop();
+        if (tache === source) return true;
+        if (visites.has(tache)) continue;
+
+        visites.add(tache);
+        liaisons.forEach((liaison) => {
+          if (liaison.source === tache) aVisiter.push(liaison.cible);
+        });
+      }
+
+      return false;
+    }
+
+    function recalculerPlanning() {
+      const taches = [...zoneTravail.querySelectorAll(".tache")];
+      const nombrePredecesseurs = new Map(taches.map((tache) => [tache, 0]));
+      const successeurs = new Map(taches.map((tache) => [tache, []]));
+      const predecesseurs = new Map(taches.map((tache) => [tache, []]));
+      const debutsTot = new Map();
+      const finsTot = new Map();
+      const ordre = [];
+
+      liaisons.forEach((liaison) => {
+        nombrePredecesseurs.set(liaison.cible, nombrePredecesseurs.get(liaison.cible) + 1);
+        successeurs.get(liaison.source).push(liaison.cible);
+        predecesseurs.get(liaison.cible).push(liaison.source);
+      });
+
+      const file = taches.filter((tache) => nombrePredecesseurs.get(tache) === 0);
+
+      while (file.length) {
+        const tache = file.shift();
+        ordre.push(tache);
+        const contrainte = lireDateLocale(tache.dataset.contrainteDebut);
+        const listePredecesseurs = predecesseurs.get(tache);
+        const finsPredecesseurs = listePredecesseurs.map((predecesseur) => finsTot.get(predecesseur));
+        let debutTot = null;
+
+        if (listePredecesseurs.length === 0) {
+          debutTot = contrainte;
+        } else if (finsPredecesseurs.every((date) => date instanceof Date)) {
+          debutTot = new Date(Math.max(...finsPredecesseurs.map((date) => date.getTime())));
+          if (contrainte && contrainte > debutTot) debutTot = contrainte;
+        }
+
+        tache.dataset.debutTot = debutTot ? String(debutTot.getTime()) : "";
+        debutsTot.set(tache, debutTot);
+        const champDate = tache.querySelector(".debut-tot");
+        const dateAffichee = debutTot || contrainte;
+        champDate.value = dateAffichee ? formaterDateLocale(dateAffichee) : "";
+        champDate.classList.toggle("avec-contrainte", Boolean(contrainte));
+        const blocDebut = champDate.closest(".date-exterieure");
+        blocDebut.classList.toggle("contrainte-active", Boolean(contrainte));
+        champDate.title = contrainte
+          ? "Contrainte de début au plus tôt"
+          : "Date calculée — choisissez une date pour ajouter une contrainte";
+
+        const duree = Number(tache.dataset.duree);
+        const finTot = debutTot
+          ? new Date(debutTot.getTime() + convertirDureeEnMillisecondes(duree))
+          : null;
+        finsTot.set(tache, finTot);
+        tache.dataset.finTot = finTot ? String(finTot.getTime()) : "";
+
+        successeurs.get(tache).forEach((successeur) => {
+          const nouveauNombre = nombrePredecesseurs.get(successeur) - 1;
+          nombrePredecesseurs.set(successeur, nouveauNombre);
+          if (nouveauNombre === 0) file.push(successeur);
+        });
+      }
+
+      const finsTerminales = taches
+        .filter((tache) => successeurs.get(tache).length === 0)
+        .map((tache) => finsTot.get(tache))
+        .filter((date) => date instanceof Date);
+      const finProjet = finsTerminales.length
+        ? new Date(Math.max(...finsTerminales.map((date) => date.getTime())))
+        : null;
+      const finsTard = new Map();
+      const debutsTard = new Map();
+
+      [...ordre].reverse().forEach((tache) => {
+        const listeSuccesseurs = successeurs.get(tache);
+        const debutsTardSuccesseurs = listeSuccesseurs.map((successeur) => debutsTard.get(successeur));
+        let finTard = null;
+
+        if (finsTot.get(tache) instanceof Date) {
+          if (listeSuccesseurs.length === 0) {
+            finTard = finProjet;
+          } else if (debutsTardSuccesseurs.every((date) => date instanceof Date)) {
+            finTard = new Date(Math.min(...debutsTardSuccesseurs.map((date) => date.getTime())));
+          }
+        }
+
+        const duree = Number(tache.dataset.duree);
+        const debutTard = finTard
+          ? new Date(finTard.getTime() - convertirDureeEnMillisecondes(duree))
+          : null;
+        finsTard.set(tache, finTard);
+        debutsTard.set(tache, debutTard);
+        tache.dataset.finTard = finTard ? String(finTard.getTime()) : "";
+
+        const champFinTard = tache.querySelector(".fin-tard");
+        champFinTard.value = finTard ? formaterDateLocale(finTard) : "";
+
+        const debutTot = debutsTot.get(tache);
+        const margeEnMillisecondes = debutTot && debutTard
+          ? Math.max(0, debutTard.getTime() - debutTot.getTime())
+          : null;
+        tache.dataset.margeTotale = margeEnMillisecondes === null
+          ? ""
+          : String(margeEnMillisecondes);
+        tache.querySelector(".marge-totale").textContent = margeEnMillisecondes === null
+          ? "Marge totale : —"
+          : `Marge totale : ${formaterMarge(margeEnMillisecondes)}`;
+      });
+
+      taches.forEach((tache) => {
+        tache.classList.toggle("critique", estTacheCritique(tache));
+      });
+
+      liaisons.forEach((liaison) => {
+        const finSource = liaison.source.dataset.finTot;
+        const debutCible = liaison.cible.dataset.debutTot;
+        const liaisonCritique = estTacheCritique(liaison.source)
+          && estTacheCritique(liaison.cible)
+          && finSource !== ""
+          && debutCible !== ""
+          && Math.abs(Number(finSource) - Number(debutCible)) < 1;
+        liaison.groupe.classList.toggle("liaison-critique", liaisonCritique);
+        actualiserApparenceLiaison(liaison);
+      });
+
+      sauvegarderProjetLocal();
+    }
+
+    function estTacheCritique(tache) {
+      return Boolean(
+        tache.dataset.debutTot
+        && tache.dataset.margeTotale !== ""
+        && Math.abs(Number(tache.dataset.margeTotale)) < 1
+      );
+    }
+
+    function formaterMarge(margeEnMillisecondes) {
+      const unite = champUnite.value.trim() || "Un.";
+      const valeur = margeEnMillisecondes / convertirDureeEnMillisecondes(1);
+      const valeurArrondie = Math.round(valeur * 100) / 100;
+      return `${formatDuree(valeurArrondie)} (${unite})`;
+    }
+
+    function convertirDureeEnMillisecondes(duree) {
+      const unite = champUnite.value.trim().toLocaleLowerCase("fr");
+
+      if (["min", "mn", "minute", "minutes"].includes(unite)) {
+        return duree * MILLISECONDES_PAR_MINUTE;
+      }
+
+      if (["h", "hr", "heure", "heures"].includes(unite)) {
+        return duree * MILLISECONDES_PAR_HEURE;
+      }
+
+      if (["sem", "semaine", "semaines"].includes(unite)) {
+        return duree * 7 * MILLISECONDES_PAR_JOUR;
+      }
+
+      return duree * MILLISECONDES_PAR_JOUR;
+    }
+
+    function lireDateLocale(valeur) {
+      if (!valeur) return null;
+      const parties = valeur.slice(0, 10).split("-").map(Number);
+      if (parties.length !== 3 || parties.some((partie) => !Number.isFinite(partie))) return null;
+      const date = new Date(parties[0], parties[1] - 1, parties[2]);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function formaterDateLocale(date) {
+      const deuxChiffres = (nombre) => String(nombre).padStart(2, "0");
+      return [
+        date.getFullYear(),
+        "-",
+        deuxChiffres(date.getMonth() + 1),
+        "-",
+        deuxChiffres(date.getDate())
+      ].join("");
+    }
+
+    function enregistrerProjet() {
+      const projet = construireProjet();
+      const contenu = JSON.stringify(projet, null, 2);
+      const objetFichier = new Blob([contenu], { type: "application/json" });
+      const adresse = URL.createObjectURL(objetFichier);
+      const lien = document.createElement("a");
+      const dateDuJour = new Date().toISOString().slice(0, 10);
+      lien.href = adresse;
+      lien.download = `planning-${dateDuJour}.json`;
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+      window.setTimeout(() => URL.revokeObjectURL(adresse), 1000);
+    }
+
+    function construireProjet() {
+      const taches = [...zoneTravail.querySelectorAll(".tache")];
+      return {
+        format: "planning-reseau",
+        version: 1,
+        unite: champUnite.value.trim() || "Un.",
+        taches: taches.map((tache) => ({
+          id: tache.dataset.id,
+          nom: tache.dataset.nom,
+          objet: tache.dataset.objet || "",
+          description: tache.dataset.description || "",
+          duree: Number(tache.dataset.duree),
+          x: tache.offsetLeft,
+          y: tache.offsetTop,
+          contrainteDebut: tache.dataset.contrainteDebut || ""
+        })),
+        liaisons: liaisons.map((liaison) => ({
+          source: liaison.source.dataset.id,
+          cible: liaison.cible.dataset.id
+        }))
+      };
+    }
+
+    function sauvegarderProjetLocal() {
+      try {
+        localStorage.setItem(CLE_SAUVEGARDE_LOCALE, JSON.stringify(construireProjet()));
+      } catch (erreur) {
+        // Le planning reste utilisable si le navigateur refuse le stockage local.
+      }
+    }
+
+    function preparerImpression() {
+      const taches = [...zoneTravail.querySelectorAll(".tache")];
+      if (!taches.length) return;
+
+      const gauche = Math.min(...taches.map((tache) => tache.offsetLeft));
+      const haut = Math.min(...taches.map((tache) => tache.offsetTop));
+      const droite = Math.max(...taches.map((tache) => tache.offsetLeft + tache.offsetWidth));
+      const bas = Math.max(...taches.map((tache) => tache.offsetTop + tache.offsetHeight));
+      const largeurPlanning = Math.max(1, droite - gauche);
+      const hauteurPlanning = Math.max(1, bas - haut);
+      const largeurPage = 1047;
+      const hauteurPage = 718;
+      const margeInterieure = 18;
+      const echelle = Math.min(
+        1,
+        (largeurPage - 2 * margeInterieure) / largeurPlanning,
+        (hauteurPage - 2 * margeInterieure) / hauteurPlanning
+      );
+      const decalageX = (largeurPage - largeurPlanning * echelle) / 2 - gauche * echelle;
+      const decalageY = (hauteurPage - hauteurPlanning * echelle) / 2 - haut * echelle;
+
+      zoneTravail.style.setProperty("--impression-echelle", String(echelle));
+      zoneTravail.style.setProperty("--impression-x", `${decalageX}px`);
+      zoneTravail.style.setProperty("--impression-y", `${decalageY}px`);
+    }
+
+    async function ouvrirProjet() {
+      const fichier = fichierProjet.files[0];
+      if (!fichier) return;
+
+      try {
+        const contenu = await fichier.text();
+        const projet = normaliserProjet(JSON.parse(contenu));
+        const projetActuelNonVide = zoneTravail.querySelector(".tache") !== null;
+
+        if (projetActuelNonVide) {
+          const remplacer = window.confirm(
+            "Ouvrir ce projet remplacera le planning actuellement affiché. Continuer ?"
+          );
+          if (!remplacer) return;
+        }
+
+        afficherProjet(projet);
+      } catch (erreur) {
+        window.alert("Ce fichier ne contient pas un projet de planning valide.");
+      } finally {
+        fichierProjet.value = "";
+      }
+    }
+
+    function afficherProjet(projet) {
+      viderProjet();
+      champUnite.value = projet.unite;
+      const tachesParIdentifiant = new Map();
+
+      projet.taches.forEach((donnees) => {
+        const tache = creerTache(donnees.nom, donnees.duree, donnees.x, donnees.y, {
+          id: donnees.id,
+          objet: donnees.objet,
+          description: donnees.description,
+          contrainteDebut: donnees.contrainteDebut,
+          positionExacte: true,
+          recalculer: false
+        });
+        tachesParIdentifiant.set(donnees.id, tache);
+      });
+
+      projet.liaisons.forEach((donnees) => {
+        creerLiaison(
+          tachesParIdentifiant.get(donnees.source),
+          tachesParIdentifiant.get(donnees.cible),
+          false
+        );
+      });
+
+      prochainIdentifiant = 1;
+      while (tachesParIdentifiant.has(String(prochainIdentifiant))) prochainIdentifiant += 1;
+      actualiserUnite();
+    }
+
+    async function chargerProjetDemonstration() {
+      let donnees = PROJET_DEMONSTRATION;
+
+      try {
+        const sauvegardeLocale = localStorage.getItem(CLE_SAUVEGARDE_LOCALE);
+        if (sauvegardeLocale) {
+          afficherProjet(normaliserProjet(JSON.parse(sauvegardeLocale)));
+          return;
+        }
+      } catch (erreur) {
+        // Le projet de démonstration est utilisé si la sauvegarde locale est illisible.
+      }
+
+      try {
+        const reponse = await fetch("planning.json", { cache: "no-store" });
+        if (!reponse.ok) throw new Error("Projet de démonstration inaccessible");
+        donnees = await reponse.json();
+      } catch (erreur) {
+        // La copie intégrée est utilisée quand le navigateur bloque l'accès au fichier local.
+      }
+
+      afficherProjet(normaliserProjet(donnees));
+    }
+
+    function normaliserProjet(donnees) {
+      if (
+        !donnees ||
+        donnees.format !== "planning-reseau" ||
+        donnees.version !== 1 ||
+        !Array.isArray(donnees.taches) ||
+        !Array.isArray(donnees.liaisons)
+      ) {
+        throw new Error("Format de projet invalide");
+      }
+
+      const identifiants = new Set();
+      const taches = donnees.taches.map((tache) => {
+        const id = String(tache.id);
+        const nom = typeof tache.nom === "string" ? tache.nom.trim() : "";
+        const objet = typeof tache.objet === "string" ? tache.objet.trim().slice(0, 160) : "";
+        const description = typeof tache.description === "string" ? tache.description.trim() : "";
+        const duree = Number(tache.duree);
+        const x = Number(tache.x);
+        const y = Number(tache.y);
+        const contrainteDebut = typeof tache.contrainteDebut === "string"
+          ? tache.contrainteDebut.slice(0, 10)
+          : "";
+
+        if (
+          !id ||
+          identifiants.has(id) ||
+          !nom ||
+          !Number.isFinite(duree) ||
+          duree <= 0 ||
+          !Number.isFinite(x) ||
+          !Number.isFinite(y) ||
+          (contrainteDebut && !lireDateLocale(contrainteDebut))
+        ) {
+          throw new Error("Tâche invalide");
+        }
+
+        identifiants.add(id);
+        return { id, nom, objet, description, duree, x, y, contrainteDebut };
+      });
+
+      const liaisonsVues = new Set();
+      const successeurs = new Map(taches.map((tache) => [tache.id, []]));
+      const nombrePredecesseurs = new Map(taches.map((tache) => [tache.id, 0]));
+      const liaisonsNormalisees = donnees.liaisons.map((liaison) => {
+        const source = String(liaison.source);
+        const cible = String(liaison.cible);
+        const cle = `${source}>${cible}`;
+
+        if (
+          source === cible ||
+          !identifiants.has(source) ||
+          !identifiants.has(cible) ||
+          liaisonsVues.has(cle)
+        ) {
+          throw new Error("Liaison invalide");
+        }
+
+        liaisonsVues.add(cle);
+        successeurs.get(source).push(cible);
+        nombrePredecesseurs.set(cible, nombrePredecesseurs.get(cible) + 1);
+        return { source, cible };
+      });
+
+      const file = taches
+        .map((tache) => tache.id)
+        .filter((id) => nombrePredecesseurs.get(id) === 0);
+      let nombreTraite = 0;
+
+      while (file.length) {
+        const id = file.shift();
+        nombreTraite += 1;
+        successeurs.get(id).forEach((successeur) => {
+          const nouveauNombre = nombrePredecesseurs.get(successeur) - 1;
+          nombrePredecesseurs.set(successeur, nouveauNombre);
+          if (nouveauNombre === 0) file.push(successeur);
+        });
+      }
+
+      if (nombreTraite !== taches.length) throw new Error("Cycle dans le projet");
+
+      const unite = typeof donnees.unite === "string" && donnees.unite.trim()
+        ? donnees.unite.trim().slice(0, 8)
+        : "Un.";
+      return { unite, taches, liaisons: liaisonsNormalisees };
+    }
+
+    function viderProjet() {
+      selectionnerLiaison(null);
+      liaisons.forEach((liaison) => liaison.groupe.remove());
+      liaisons = [];
+      zoneTravail.querySelectorAll(".tache").forEach((tache) => tache.remove());
+      prochainIdentifiant = 1;
+      recalculerPlanning();
+    }
+
+    function limiter(valeur, minimum, maximum) {
+      return Math.min(Math.max(valeur, minimum), maximum);
+    }
+
+    chargerProjetDemonstration();
+  </script>
+</body>
+</html>
