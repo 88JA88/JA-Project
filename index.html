@@ -35,7 +35,7 @@
       display: flex;
       align-items: flex-start;
       min-height: 58px;
-      padding: 10px 22px;
+      padding: 8px 12px;
       background: #f8f9fa;
       border-bottom: 1px solid #c7ccd1;
       box-shadow: 0 1px 4px rgb(31 41 51 / 8%);
@@ -55,11 +55,20 @@
       gap: 3px;
     }
 
-    .ligne-titre {
+    .ligne-commandes {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 14px;
+      gap: 7px;
+    }
+
+    .ligne-commandes-secondaire {
+      padding-left: 0;
+    }
+
+    .separateur-titre {
+      color: #64717d;
+      font-size: 16px;
     }
 
     #resume-ressources {
@@ -85,17 +94,6 @@
       margin: 0;
       color: #64717d;
       font-size: 13px;
-    }
-
-    .outils {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .actions-projet {
-      display: flex;
-      gap: 7px;
     }
 
     .parametre-unite {
@@ -489,6 +487,79 @@
       width: min(980px, calc(100vw - 32px));
     }
 
+    #dialogue-budget {
+      width: min(760px, calc(100vw - 32px));
+    }
+
+    .parametre-budget {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto;
+      align-items: end;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .parametre-budget input {
+      margin-bottom: 0;
+    }
+
+    .conteneur-tableau-budget {
+      max-height: min(55vh, 480px);
+      overflow: auto;
+      border: 1px solid #c7ccd1;
+      border-radius: 7px;
+    }
+
+    #tableau-budget {
+      width: 100%;
+      border-collapse: collapse;
+      color: #111;
+      font-size: 12px;
+    }
+
+    #tableau-budget th,
+    #tableau-budget td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #dfe3e6;
+      text-align: left;
+    }
+
+    #tableau-budget thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #e9edf1;
+    }
+
+    #tableau-budget .valeur-numerique {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    #tableau-budget .budget-depasse td {
+      background: #fdecea;
+      color: #9b1c13;
+      font-weight: 700;
+    }
+
+    #tableau-budget .budget-conforme td:last-child {
+      color: #176b35;
+      font-weight: 700;
+    }
+
+    #resume-budget {
+      margin: 10px 0;
+      color: #26323c;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    #avertissement-budget {
+      margin: 8px 0 0;
+      color: #8a5700;
+      font-size: 12px;
+    }
+
     .conteneur-tableau-affectations {
       max-height: min(62vh, 560px);
       overflow: auto;
@@ -749,11 +820,10 @@
         min-height: 92px;
       }
 
-      .outils {
+      .ligne-commandes {
         width: 100%;
         flex-wrap: wrap;
-        justify-content: space-between;
-        gap: 10px;
+        gap: 7px;
       }
     }
   </style>
@@ -761,25 +831,25 @@
 <body>
   <header class="barre-superieure">
     <div class="identite-projet">
-      <div class="ligne-titre">
+      <div class="ligne-commandes">
         <h1>Réseau PERT</h1>
-        <div class="outils">
-          <div class="actions-projet">
-            <button id="nouveau-projet" class="bouton-barre" type="button">Nouveau projet</button>
-            <button id="enregistrer-projet" class="bouton-barre" type="button">Enregistrer</button>
-            <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
-            <button id="lier-fichier-travail" class="bouton-barre" type="button">Lier le fichier de travail</button>
-            <button id="verifier-projet" class="bouton-barre" type="button">Vérifier le projet</button>
-            <button id="gerer-ressources" class="bouton-barre" type="button">Ressources</button>
-            <button id="imprimer-projet" class="bouton-barre" type="button">Imprimer</button>
-            <input id="fichier-projet" type="file" accept="application/json,.json" hidden>
-          </div>
-          <button id="supprimer-activite" class="bouton-barre" type="button" disabled>Supprimer l’activité</button>
-          <div class="parametre-unite">
-            <label for="unite">Unité</label>
-            <input id="unite" type="text" value="j" maxlength="8" autocomplete="off" spellcheck="false">
-          </div>
+        <span class="separateur-titre" aria-hidden="true">—</span>
+        <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
+        <button id="nouveau-projet" class="bouton-barre" type="button">Nouveau projet</button>
+        <button id="gerer-ressources" class="bouton-barre" type="button">Ressources</button>
+        <div class="parametre-unite">
+          <label for="unite">Unité</label>
+          <input id="unite" type="text" value="j" maxlength="8" autocomplete="off" spellcheck="false">
         </div>
+        <button id="imprimer-projet" class="bouton-barre" type="button">Imprimer</button>
+      </div>
+      <div class="ligne-commandes ligne-commandes-secondaire">
+        <button id="enregistrer-projet" class="bouton-barre" type="button">Enregistrer</button>
+        <button id="lier-fichier-travail" class="bouton-barre" type="button">Lier le fichier de travail</button>
+        <button id="verifier-projet" class="bouton-barre" type="button">Vérifier le projet</button>
+        <button id="budget-mensuel" class="bouton-barre" type="button">Budget mensuel</button>
+        <button id="supprimer-activite" class="bouton-barre" type="button" disabled>Supprimer l’activité</button>
+        <input id="fichier-projet" type="file" accept="application/json,.json" hidden>
       </div>
       <p class="aide">Double-cliquez dans le vide pour créer une activité, ou Clic droit ou gauche sur une activité pour la renseigner ou la modifier.</p>
       <p id="resume-ressources">Ressources utilisées : aucune</p>
@@ -936,6 +1006,41 @@
     </form>
   </dialog>
 
+  <dialog id="dialogue-budget">
+    <form id="formulaire-budget">
+      <h2>Contrôle du budget mensuel</h2>
+
+      <div class="parametre-budget">
+        <div>
+          <label for="seuil-budget-mensuel">Seuil maximal par mois (€)</label>
+          <input id="seuil-budget-mensuel" type="number" min="0" step="0.01" inputmode="decimal" required>
+        </div>
+        <button type="submit">Calculer</button>
+      </div>
+
+      <p id="resume-budget"></p>
+      <div class="conteneur-tableau-budget">
+        <table id="tableau-budget">
+          <thead>
+            <tr>
+              <th scope="col">Mois</th>
+              <th scope="col" class="valeur-numerique">Seuil</th>
+              <th scope="col" class="valeur-numerique">Coût prévu</th>
+              <th scope="col" class="valeur-numerique">Écart</th>
+              <th scope="col">Situation</th>
+            </tr>
+          </thead>
+          <tbody id="corps-tableau-budget"></tbody>
+        </table>
+      </div>
+      <p id="avertissement-budget"></p>
+
+      <div class="actions">
+        <button id="fermer-budget" type="button">Fermer</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     "use strict";
 
@@ -956,6 +1061,7 @@
     const boutonOuvrirProjet = document.querySelector("#ouvrir-projet");
     const boutonLierFichierTravail = document.querySelector("#lier-fichier-travail");
     const boutonVerifierProjet = document.querySelector("#verifier-projet");
+    const boutonBudgetMensuel = document.querySelector("#budget-mensuel");
     const boutonImprimerProjet = document.querySelector("#imprimer-projet");
     const boutonGererRessources = document.querySelector("#gerer-ressources");
     const fichierProjet = document.querySelector("#fichier-projet");
@@ -986,6 +1092,13 @@
     const dialogueAffectations = document.querySelector("#dialogue-affectations");
     const corpsTableauAffectations = document.querySelector("#corps-tableau-affectations");
     const piedTableauAffectations = document.querySelector("#pied-tableau-affectations");
+    const dialogueBudget = document.querySelector("#dialogue-budget");
+    const formulaireBudget = document.querySelector("#formulaire-budget");
+    const champSeuilBudgetMensuel = document.querySelector("#seuil-budget-mensuel");
+    const resumeBudget = document.querySelector("#resume-budget");
+    const corpsTableauBudget = document.querySelector("#corps-tableau-budget");
+    const avertissementBudget = document.querySelector("#avertissement-budget");
+    const boutonFermerBudget = document.querySelector("#fermer-budget");
     const dialogueVerification = document.querySelector("#dialogue-verification");
     const resumeVerification = document.querySelector("#resume-verification");
     const nombreErreurs = document.querySelector("#nombre-erreurs");
@@ -1033,6 +1146,7 @@
     let tacheDetails = null;
     let affectationsDetails = [];
     let ressourcesProjet = [];
+    let seuilBudgetMensuel = 0;
     let fichierTravailLie = null;
     let ouvertureProjetEnCours = false;
     let ecritureFichierTravail = Promise.resolve();
@@ -1108,9 +1222,18 @@
     boutonOuvrirProjet.addEventListener("click", () => fichierProjet.click());
     boutonLierFichierTravail.addEventListener("click", lierFichierTravail);
     boutonVerifierProjet.addEventListener("click", verifierProjet);
+    boutonBudgetMensuel.addEventListener("click", ouvrirControleBudget);
     boutonAfficherTableauAffectations.addEventListener("click", ouvrirTableauAffectations);
     dialogueAffectations.addEventListener("click", (evenement) => {
       if (evenement.target === dialogueAffectations) dialogueAffectations.close();
+    });
+    formulaireBudget.addEventListener("submit", (evenement) => {
+      evenement.preventDefault();
+      calculerBudgetMensuel(true);
+    });
+    boutonFermerBudget.addEventListener("click", () => dialogueBudget.close());
+    dialogueBudget.addEventListener("click", (evenement) => {
+      if (evenement.target === dialogueBudget) dialogueBudget.close();
     });
     boutonImprimerProjet.addEventListener("click", () => window.print());
     boutonGererRessources.addEventListener("click", ouvrirGestionRessources);
@@ -2441,6 +2564,7 @@
       fichierTravailLie = null;
       boutonLierFichierTravail.removeAttribute("title");
       ressourcesProjet = lireCatalogueRessourcesLocal();
+      seuilBudgetMensuel = 0;
       champUnite.value = "j";
       viderProjet();
       ouvertureProjetEnCours = false;
@@ -2468,6 +2592,7 @@
         format: "planning-reseau",
         version: 1,
         unite: champUnite.value.trim() || "Un.",
+        seuilBudgetMensuel,
         ressources: ressourcesProjet.map((ressource) => ({ ...ressource })),
         taches: taches.map((tache) => ({
           id: tache.dataset.id,
@@ -2678,6 +2803,132 @@
       dialogueAffectations.showModal();
     }
 
+    function ouvrirControleBudget() {
+      champSeuilBudgetMensuel.value = seuilBudgetMensuel > 0
+        ? String(seuilBudgetMensuel)
+        : "";
+      calculerBudgetMensuel(false);
+      dialogueBudget.showModal();
+      champSeuilBudgetMensuel.focus();
+    }
+
+    function calculerBudgetMensuel(enregistrerSeuil) {
+      const seuilSaisi = Number(champSeuilBudgetMensuel.value);
+      if (enregistrerSeuil) {
+        if (!Number.isFinite(seuilSaisi) || seuilSaisi <= 0) {
+          window.alert("Le seuil mensuel doit être un montant supérieur à zéro.");
+          return;
+        }
+        seuilBudgetMensuel = seuilSaisi;
+        sauvegarderProjetLocal();
+      }
+
+      corpsTableauBudget.replaceChildren();
+      avertissementBudget.textContent = "";
+      const seuil = enregistrerSeuil ? seuilSaisi : seuilBudgetMensuel;
+      if (!(seuil > 0)) {
+        resumeBudget.textContent = "Indiquez un seuil mensuel, puis cliquez sur Calculer.";
+        ajouterLigneBudgetVide("Aucun seuil mensuel défini.");
+        return;
+      }
+
+      const coutsParMois = new Map();
+      let activitesSansDates = 0;
+      let coutSansDates = 0;
+      let premiereDate = Infinity;
+      let derniereDate = -Infinity;
+
+      zoneTravail.querySelectorAll(".tache").forEach((tache) => {
+        const debut = Number(tache.dataset.debutTot);
+        const fin = Number(tache.dataset.finTot);
+        const cout = calculerCoutTotalTache(tache);
+        if (
+          !tache.dataset.debutTot
+          || !tache.dataset.finTot
+          || !Number.isFinite(debut)
+          || !Number.isFinite(fin)
+          || fin <= debut
+        ) {
+          if (cout > 0) {
+            activitesSansDates += 1;
+            coutSansDates += cout;
+          }
+          return;
+        }
+
+        premiereDate = Math.min(premiereDate, debut);
+        derniereDate = Math.max(derniereDate, fin);
+        let debutMois = new Date(new Date(debut).getFullYear(), new Date(debut).getMonth(), 1);
+        while (debutMois.getTime() < fin) {
+          const finMois = new Date(debutMois.getFullYear(), debutMois.getMonth() + 1, 1);
+          const chevauchement = Math.max(
+            0,
+            Math.min(fin, finMois.getTime()) - Math.max(debut, debutMois.getTime())
+          );
+          if (chevauchement > 0) {
+            const cle = `${debutMois.getFullYear()}-${String(debutMois.getMonth() + 1).padStart(2, "0")}`;
+            const coutMois = cout * chevauchement / (fin - debut);
+            coutsParMois.set(cle, (coutsParMois.get(cle) || 0) + coutMois);
+          }
+          debutMois = finMois;
+        }
+      });
+
+      if (Number.isFinite(premiereDate) && Number.isFinite(derniereDate)) {
+        let mois = new Date(
+          new Date(premiereDate).getFullYear(),
+          new Date(premiereDate).getMonth(),
+          1
+        );
+        while (mois.getTime() < derniereDate) {
+          const cle = `${mois.getFullYear()}-${String(mois.getMonth() + 1).padStart(2, "0")}`;
+          if (!coutsParMois.has(cle)) coutsParMois.set(cle, 0);
+          mois = new Date(mois.getFullYear(), mois.getMonth() + 1, 1);
+        }
+      }
+
+      if (!coutsParMois.size) {
+        resumeBudget.textContent = "Aucun coût daté ne peut être réparti mensuellement.";
+        ajouterLigneBudgetVide("Aucune activité datée avec un coût.");
+      } else {
+        let nombreDepassements = 0;
+        [...coutsParMois.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([cle, cout]) => {
+          const [annee, mois] = cle.split("-").map(Number);
+          const libelle = new Intl.DateTimeFormat("fr-FR", {
+            month: "long",
+            year: "numeric"
+          }).format(new Date(annee, mois - 1, 1));
+          const ecart = seuil - cout;
+          const depasse = ecart < -0.005;
+          if (depasse) nombreDepassements += 1;
+
+          const ligne = document.createElement("tr");
+          ligne.className = depasse ? "budget-depasse" : "budget-conforme";
+          ajouterCelluleTableau(ligne, libelle);
+          ajouterCelluleTableau(ligne, formaterMontantEuro(seuil), "valeur-numerique");
+          ajouterCelluleTableau(ligne, formaterMontantEuro(cout), "valeur-numerique");
+          ajouterCelluleTableau(ligne, formaterMontantEuro(ecart), "valeur-numerique");
+          ajouterCelluleTableau(ligne, depasse ? "Dépassement" : "Conforme");
+          corpsTableauBudget.appendChild(ligne);
+        });
+
+        resumeBudget.textContent = nombreDepassements
+          ? `${nombreDepassements} mois dépasse(nt) le seuil fixé.`
+          : "Aucun dépassement du seuil mensuel.";
+      }
+
+      if (activitesSansDates) {
+        avertissementBudget.textContent = `${activitesSansDates} activité(s), représentant ${formaterMontantEuro(coutSansDates)}, n’ont pas de dates calculables et ne sont pas incluses.`;
+      }
+    }
+
+    function ajouterLigneBudgetVide(message) {
+      const ligne = document.createElement("tr");
+      const cellule = ajouterCelluleTableau(ligne, message, "aucune-affectation");
+      cellule.colSpan = 5;
+      corpsTableauBudget.appendChild(ligne);
+    }
+
     function ajouterCelluleTableau(ligne, texte, classe = "") {
       const cellule = document.createElement("td");
       cellule.textContent = texte;
@@ -2738,6 +2989,7 @@
 
     function afficherProjet(projet) {
       ressourcesProjet = fusionnerRessources(projet.ressources, lireCatalogueRessourcesLocal());
+      seuilBudgetMensuel = projet.seuilBudgetMensuel;
       viderProjet();
       champUnite.value = projet.unite;
       const tachesParIdentifiant = new Map();
@@ -2894,7 +3146,13 @@
       const unite = typeof donnees.unite === "string" && donnees.unite.trim()
         ? donnees.unite.trim().slice(0, 8)
         : "Un.";
-      return { unite, ressources, taches, liaisons: liaisonsNormalisees };
+      const seuilBudgetMensuel = donnees.seuilBudgetMensuel === undefined
+        ? 0
+        : Number(donnees.seuilBudgetMensuel);
+      if (!Number.isFinite(seuilBudgetMensuel) || seuilBudgetMensuel < 0) {
+        throw new Error("Seuil budgétaire invalide");
+      }
+      return { unite, seuilBudgetMensuel, ressources, taches, liaisons: liaisonsNormalisees };
     }
 
     function normaliserAffectationsRessources(donnees, identifiantsRessources, dureeTache) {
