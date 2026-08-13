@@ -748,6 +748,9 @@
       <label for="discipline-ressource">Discipline</label>
       <input id="discipline-ressource" type="text" maxlength="80" autocomplete="off">
 
+      <label for="cout-unitaire-ressource">Coût un. (€)</label>
+      <input id="cout-unitaire-ressource" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+
       <div class="actions-ressources">
         <button id="ajouter-ressource" type="button">Ajouter</button>
         <button id="modifier-ressource" type="button" disabled>Modifier</button>
@@ -796,6 +799,7 @@
     const listeRessources = document.querySelector("#liste-ressources");
     const champNomRessource = document.querySelector("#nom-ressource");
     const champDisciplineRessource = document.querySelector("#discipline-ressource");
+    const champCoutUnitaireRessource = document.querySelector("#cout-unitaire-ressource");
     const boutonAjouterRessource = document.querySelector("#ajouter-ressource");
     const boutonModifierRessource = document.querySelector("#modifier-ressource");
     const boutonSupprimerRessource = document.querySelector("#supprimer-ressource");
@@ -814,8 +818,8 @@
       version: 1,
       unite: "j",
       ressources: [
-        { id: "r1", nom: "Res 2", discipline: "Discipline C" },
-        { id: "r2", nom: "Res 3", discipline: "Discipline F" }
+        { id: "r1", nom: "Res 2", discipline: "Discipline C", coutUnitaire: 0 },
+        { id: "r2", nom: "Res 3", discipline: "Discipline F", coutUnitaire: 0 }
       ],
       taches: [
         { id: "1", nom: "Recueil des données existantes", objet: "Regrouper les arrêtés du 05/06/2022 et les normes dans Légifrance", description: "", ressources: [], duree: 5, x: 25, y: 280, contrainteDebut: "2026-08-20" },
@@ -1205,6 +1209,7 @@
     function ouvrirGestionRessources() {
       champNomRessource.value = "";
       champDisciplineRessource.value = "";
+      champCoutUnitaireRessource.value = "0";
       actualiserListeRessources();
       dialogueRessources.showModal();
       champNomRessource.focus();
@@ -1222,7 +1227,7 @@
         .forEach((ressource) => {
           const option = document.createElement("option");
           option.value = ressource.id;
-          option.textContent = `${ressource.nom} — ${ressource.discipline}`;
+          option.textContent = `${ressource.nom} — ${ressource.discipline} — ${formaterCoutUnitaire(ressource.coutUnitaire)} €/Un.`;
           listeRessources.appendChild(option);
         });
 
@@ -1240,6 +1245,7 @@
 
       champNomRessource.value = ressource.nom;
       champDisciplineRessource.value = ressource.discipline;
+      champCoutUnitaireRessource.value = String(ressource.coutUnitaire);
     }
 
     function ajouterRessource() {
@@ -1267,6 +1273,7 @@
 
       ressource.nom = valeurs.nom;
       ressource.discipline = valeurs.discipline;
+      ressource.coutUnitaire = valeurs.coutUnitaire;
       enregistrerRessources();
       actualiserListeRessources(ressource.id);
     }
@@ -1286,6 +1293,7 @@
       ressourcesProjet = ressourcesProjet.filter((element) => element.id !== ressource.id);
       champNomRessource.value = "";
       champDisciplineRessource.value = "";
+      champCoutUnitaireRessource.value = "0";
       enregistrerRessources();
       actualiserListeRessources();
     }
@@ -1293,11 +1301,23 @@
     function lireChampsRessource() {
       const nom = champNomRessource.value.trim();
       const discipline = champDisciplineRessource.value.trim();
+      const coutUnitaire = Number(champCoutUnitaireRessource.value);
       if (!nom || !discipline) {
         window.alert("Renseignez le nom et la discipline.");
         return null;
       }
-      return { nom, discipline };
+      if (!Number.isFinite(coutUnitaire) || coutUnitaire < 0) {
+        window.alert("Le coût unitaire doit être un nombre positif ou nul.");
+        return null;
+      }
+      return { nom, discipline, coutUnitaire };
+    }
+
+    function formaterCoutUnitaire(coutUnitaire) {
+      return new Intl.NumberFormat("fr-FR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      }).format(coutUnitaire);
     }
 
     function trouverRessource(id) {
@@ -1388,9 +1408,10 @@
       activerDeplacement(tache);
       activerCreationLiaison(tache, tache.querySelector(".connecteur"));
       const champDateDebut = tache.querySelector(".debut-tot");
-      champDateDebut.addEventListener("change", (evenement) => {
+      champDateDebut.addEventListener("input", (evenement) => {
         tache.dataset.contrainteDebut = evenement.target.value;
         recalculerPlanning();
+        window.requestAnimationFrame(() => champDateDebut.blur());
       });
       tache.querySelector(".ouvrir-calendrier").addEventListener("click", () => {
         if (typeof champDateDebut.showPicker === "function") {
@@ -2230,15 +2251,26 @@
         const discipline = typeof ressource.discipline === "string"
           ? ressource.discipline.trim().slice(0, 80)
           : "";
+        const coutUnitaire = ressource.coutUnitaire === undefined
+          ? 0
+          : Number(ressource.coutUnitaire);
         const cle = creerCleRessource(nom, discipline);
 
-        if (!id || !nom || !discipline || identifiants.has(id) || couples.has(cle)) {
+        if (
+          !id
+          || !nom
+          || !discipline
+          || !Number.isFinite(coutUnitaire)
+          || coutUnitaire < 0
+          || identifiants.has(id)
+          || couples.has(cle)
+        ) {
           throw new Error("Ressource invalide");
         }
 
         identifiants.add(id);
         couples.add(cle);
-        return { id, nom, discipline };
+        return { id, nom, discipline, coutUnitaire };
       });
     }
 
@@ -2266,7 +2298,12 @@
         while (resultat.some((element) => element.id === id)) {
           id = `r${numero++}`;
         }
-        resultat.push({ id, nom: ressource.nom, discipline: ressource.discipline });
+        resultat.push({
+          id,
+          nom: ressource.nom,
+          discipline: ressource.discipline,
+          coutUnitaire: ressource.coutUnitaire
+        });
         couples.add(cle);
       });
 

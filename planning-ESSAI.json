@@ -58,7 +58,7 @@
         }
       ],
       "duree": 3,
-      "x": 696,
+      "x": 697,
       "y": 278,
       "contrainteDebut": ""
     },
@@ -85,7 +85,7 @@
     {
       "id": "4",
       "nom": "Répartition du travail",
-      "objet": "Assignations des activités à effectuer",
+      "objet": "Assignations des tâches à effectuer",
       "description": "",
       "ressources": [
         {
