@@ -765,6 +765,7 @@
         <h1>Réseau PERT</h1>
         <div class="outils">
           <div class="actions-projet">
+            <button id="nouveau-projet" class="bouton-barre" type="button">Nouveau projet</button>
             <button id="enregistrer-projet" class="bouton-barre" type="button">Enregistrer</button>
             <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
             <button id="lier-fichier-travail" class="bouton-barre" type="button">Lier le fichier de travail</button>
@@ -950,6 +951,7 @@
     const boutonAnnuler = document.querySelector("#annuler");
     const boutonValiderTache = document.querySelector("#valider-tache");
     const boutonSupprimerActivite = document.querySelector("#supprimer-activite");
+    const boutonNouveauProjet = document.querySelector("#nouveau-projet");
     const boutonEnregistrerProjet = document.querySelector("#enregistrer-projet");
     const boutonOuvrirProjet = document.querySelector("#ouvrir-projet");
     const boutonLierFichierTravail = document.querySelector("#lier-fichier-travail");
@@ -1101,6 +1103,7 @@
     });
 
     boutonSupprimerActivite.addEventListener("click", supprimerActiviteSelectionnee);
+    boutonNouveauProjet.addEventListener("click", creerNouveauProjet);
     boutonEnregistrerProjet.addEventListener("click", enregistrerProjet);
     boutonOuvrirProjet.addEventListener("click", () => fichierProjet.click());
     boutonLierFichierTravail.addEventListener("click", lierFichierTravail);
@@ -2402,6 +2405,61 @@
       lien.click();
       lien.remove();
       window.setTimeout(() => URL.revokeObjectURL(adresse), 1000);
+    }
+
+    async function creerNouveauProjet() {
+      const projetActuelNonVide = zoneTravail.querySelector(".tache") !== null;
+      if (
+        projetActuelNonVide
+        && !window.confirm(
+          "Créer un nouveau projet vide ? Vérifiez que le projet actuel est bien enregistré avant de continuer."
+        )
+      ) {
+        return;
+      }
+
+      let nouveauFichier = null;
+      if (typeof window.showSaveFilePicker === "function") {
+        try {
+          nouveauFichier = await window.showSaveFilePicker({
+            suggestedName: "nouveau-planning.json",
+            types: [{
+              description: "Projet de planning JSON",
+              accept: { "application/json": [".json"] }
+            }]
+          });
+        } catch (erreur) {
+          if (erreur?.name !== "AbortError") {
+            window.alert("Impossible de créer le nouveau fichier de travail.");
+          }
+          return;
+        }
+      }
+
+      await ecritureFichierTravail.catch(() => {});
+      ouvertureProjetEnCours = true;
+      fichierTravailLie = null;
+      boutonLierFichierTravail.removeAttribute("title");
+      ressourcesProjet = lireCatalogueRessourcesLocal();
+      champUnite.value = "j";
+      viderProjet();
+      ouvertureProjetEnCours = false;
+      sauvegarderProjetLocal();
+
+      if (!nouveauFichier) {
+        window.alert("Le nouveau projet est prêt. Utilisez Enregistrer pour créer son fichier JSON.");
+        return;
+      }
+
+      try {
+        fichierTravailLie = nouveauFichier;
+        boutonLierFichierTravail.title = `Fichier lié : ${nouveauFichier.name}`;
+        await ecrireFichierTravailLie();
+      } catch (erreur) {
+        fichierTravailLie = null;
+        boutonLierFichierTravail.removeAttribute("title");
+        window.alert("Le projet est vide, mais son fichier n’a pas pu être créé. Utilisez Enregistrer.");
+      }
     }
 
     function construireProjet() {
