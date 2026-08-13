@@ -293,7 +293,8 @@
     }
 
     .date-fin {
-      right: 0;
+      left: 0;
+      width: 360px;
       bottom: 0;
     }
 
@@ -323,7 +324,14 @@
     }
 
     .date-fin .ligne-date {
-      justify-content: flex-end;
+      justify-content: flex-start;
+      gap: 12px;
+    }
+
+    .cout-total-exterieur {
+      color: #111;
+      font-size: 12px;
+      white-space: nowrap;
     }
 
     .icone-calendrier {
@@ -503,7 +511,7 @@
       min-height: 105px;
       margin-bottom: 10px;
       color: #111;
-      font-size: 13px;
+      font-size: 11px;
     }
 
     .actions-affectation {
@@ -726,7 +734,7 @@
         <select id="liste-affectations" size="4"></select>
       </div>
 
-      <p class="calcul-en-attente"><strong>Coût :</strong> En attente</p>
+      <p class="calcul-en-attente"><strong>Coût total :</strong> <span id="cout-total-activite">0,00 €</span></p>
 
       <div class="actions">
         <button id="annuler-details" type="button">Annuler</button>
@@ -795,6 +803,7 @@
     const boutonAjouterAffectation = document.querySelector("#ajouter-affectation");
     const boutonModifierAffectation = document.querySelector("#modifier-affectation");
     const boutonRetirerAffectation = document.querySelector("#retirer-affectation");
+    const coutTotalActivite = document.querySelector("#cout-total-activite");
     const dialogueRessources = document.querySelector("#dialogue-ressources");
     const listeRessources = document.querySelector("#liste-ressources");
     const champNomRessource = document.querySelector("#nom-ressource");
@@ -889,6 +898,7 @@
       tacheDetails.dataset.description = champDescription.value.trim();
       tacheDetails.dataset.ressources = JSON.stringify(affectationsDetails);
       afficherRessourcesTache(tacheDetails);
+      afficherCoutTotalTache(tacheDetails);
       actualiserLiaisonsDe(tacheDetails);
       sauvegarderProjetLocal();
       dialogueDetails.close();
@@ -1109,15 +1119,19 @@
     function actualiserListeAffectations(identifiantSelectionne = "") {
       listeAffectations.replaceChildren();
       if (!tacheDetails) return;
+      let coutTotal = 0;
 
       affectationsDetails.forEach((affectation) => {
         const ressource = trouverRessource(affectation.ressourceId);
         if (!ressource) return;
         const option = document.createElement("option");
+        const coutAffectation = affectation.duree * ressource.coutUnitaire;
+        coutTotal += coutAffectation;
         option.value = affectation.ressourceId;
-        option.textContent = `${ressource.nom} — ${ressource.discipline} — ${formatDuree(affectation.duree)} (${champUnite.value.trim() || "Un."})`;
+        option.textContent = `${ressource.nom} — ${ressource.discipline} — Coût un. : ${formaterMontantEuro(ressource.coutUnitaire)} — Durée : ${formatDuree(affectation.duree)} (${champUnite.value.trim() || "Un."}) — Total : ${formaterMontantEuro(coutAffectation)}`;
         listeAffectations.appendChild(option);
       });
+      coutTotalActivite.textContent = formaterMontantEuro(coutTotal);
 
       listeAffectations.value = identifiantSelectionne;
       const selectionValide = Boolean(identifiantSelectionne);
@@ -1320,6 +1334,15 @@
       }).format(coutUnitaire);
     }
 
+    function formaterMontantEuro(montant) {
+      return new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "EUR",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(montant);
+    }
+
     function trouverRessource(id) {
       return ressourcesProjet.find((ressource) => ressource.id === id);
     }
@@ -1347,6 +1370,11 @@
         localStorage.setItem(CLE_CATALOGUE_RESSOURCES, JSON.stringify(ressourcesProjet));
       } catch (erreur) {
         // Le catalogue reste utilisable si le navigateur refuse le stockage local.
+      }
+      zoneTravail.querySelectorAll(".tache").forEach(afficherCoutTotalTache);
+      if (dialogueDetails.open && tacheDetails) {
+        actualiserChoixRessourcesActivite(champRessourceActivite.value);
+        actualiserListeAffectations(listeAffectations.value);
       }
       sauvegarderProjetLocal();
     }
@@ -1388,6 +1416,7 @@
         <div class="date-exterieure date-fin">
           <div class="ligne-date">
             <input class="fin-tard" type="date" aria-label="Fin au plus tard" readonly tabindex="-1">
+            <span class="cout-total-exterieur">Coût total : 0,00 €</span>
           </div>
         </div>
       `;
@@ -1398,6 +1427,7 @@
       tache.querySelector(".texte-objet").textContent = tache.dataset.objet;
       afficherDuree(tache);
       afficherRessourcesTache(tache);
+      afficherCoutTotalTache(tache);
 
       const gaucheDemandee = options.positionExacte ? x : x - LARGEUR_TACHE / 2;
       const hautDemande = options.positionExacte ? y : y - 41;
@@ -1473,10 +1503,26 @@
       tache.style.paddingTop = `${hauteurEntete}px`;
     }
 
+    function calculerCoutTotalTache(tache) {
+      return lireAffectationsTache(tache).reduce((total, affectation) => {
+        const ressource = trouverRessource(affectation.ressourceId);
+        return ressource
+          ? total + affectation.duree * ressource.coutUnitaire
+          : total;
+      }, 0);
+    }
+
+    function afficherCoutTotalTache(tache) {
+      const conteneur = tache.querySelector(".cout-total-exterieur");
+      if (!conteneur) return;
+      conteneur.textContent = `Coût total : ${formaterMontantEuro(calculerCoutTotalTache(tache))}`;
+    }
+
     function actualiserUnite() {
       document.querySelectorAll(".tache").forEach((tache) => {
         afficherDuree(tache);
         afficherRessourcesTache(tache);
+        afficherCoutTotalTache(tache);
       });
       recalculerPlanning();
     }
