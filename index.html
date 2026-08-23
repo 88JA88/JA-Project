@@ -491,6 +491,43 @@
       width: min(760px, calc(100vw - 32px));
     }
 
+    #dialogue-mode-emploi {
+      width: min(720px, calc(100vw - 32px));
+      max-height: calc(100vh - 32px);
+    }
+
+    #dialogue-mode-emploi form {
+      display: flex;
+      max-height: calc(100vh - 32px);
+      flex-direction: column;
+    }
+
+    .contenu-mode-emploi {
+      overflow: auto;
+      padding-right: 8px;
+      color: #26323c;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .contenu-mode-emploi h3 {
+      margin: 18px 0 6px;
+      font-size: 14px;
+    }
+
+    .contenu-mode-emploi h3:first-child {
+      margin-top: 0;
+    }
+
+    .contenu-mode-emploi ul {
+      margin: 6px 0 10px;
+      padding-left: 22px;
+    }
+
+    .contenu-mode-emploi li + li {
+      margin-top: 4px;
+    }
+
     .parametre-budget {
       display: grid;
       grid-template-columns: minmax(180px, 1fr) auto;
@@ -576,9 +613,10 @@
 
     #tableau-affectations th,
     #tableau-affectations td {
-      padding: 8px 9px;
+      padding: 4px 8px;
       border-right: 1px solid #dfe3e6;
       border-bottom: 1px solid #dfe3e6;
+      line-height: 1.2;
       text-align: left;
       vertical-align: top;
     }
@@ -842,6 +880,7 @@
           <input id="unite" type="text" value="j" maxlength="8" autocomplete="off" spellcheck="false">
         </div>
         <button id="imprimer-projet" class="bouton-barre" type="button">Imprimer</button>
+        <button id="ouvrir-mode-emploi" class="bouton-barre" type="button">Mode d’emploi</button>
       </div>
       <div class="ligne-commandes ligne-commandes-secondaire">
         <button id="enregistrer-projet" class="bouton-barre" type="button">Enregistrer</button>
@@ -851,7 +890,7 @@
         <button id="supprimer-activite" class="bouton-barre" type="button" disabled>Supprimer l’activité</button>
         <input id="fichier-projet" type="file" accept="application/json,.json" hidden>
       </div>
-      <p class="aide">Double-cliquez dans le vide pour créer une activité, ou Clic droit ou gauche sur une activité pour la renseigner ou la modifier.</p>
+      <p class="aide">Double-cliquez dans le vide pour créer une activité. Sur une activité : clic gauche pour la sélectionner, double-clic gauche pour la modifier, clic droit pour renseigner ses détails.</p>
       <p id="resume-ressources">Ressources utilisées : aucune</p>
       <button id="afficher-tableau-affectations" type="button">Tableau des affectations</button>
     </div>
@@ -1041,6 +1080,67 @@
     </form>
   </dialog>
 
+  <dialog id="dialogue-mode-emploi">
+    <form method="dialog">
+      <h2>Mode d’emploi</h2>
+
+      <div class="contenu-mode-emploi">
+        <h3>Ouvrir ou démarrer un planning</h3>
+        <ul>
+          <li>Au démarrage, le fichier <strong>planning.json</strong> est chargé automatiquement s’il est accessible.</li>
+          <li><strong>Ouvrir</strong> permet de choisir un autre fichier JSON.</li>
+          <li><strong>Nouveau projet</strong> efface le planning affiché après confirmation.</li>
+        </ul>
+
+        <h3>Manipuler les activités</h3>
+        <ul>
+          <li>Double-cliquez dans le vide pour créer une activité.</li>
+          <li>Faites glisser une activité pour la déplacer.</li>
+          <li>Double-cliquez sur une activité pour modifier son nom, son objet et sa durée.</li>
+          <li>Faites un clic droit sur une activité pour saisir sa description et ses ressources.</li>
+          <li>Cliquez sur une activité, puis sur <strong>Supprimer l’activité</strong>, pour l’effacer.</li>
+          <li>Utilisez l’icône calendrier pour fixer une date de début au plus tôt.</li>
+        </ul>
+
+        <h3>Créer ou supprimer une liaison</h3>
+        <ul>
+          <li>Faites glisser le rond bleu d’une activité vers l’activité suivante.</li>
+          <li>Pour supprimer une liaison, cliquez sur sa flèche puis appuyez sur <strong>Suppr</strong> ou <strong>Retour arrière</strong>.</li>
+        </ul>
+
+        <h3>Gérer les ressources</h3>
+        <ul>
+          <li><strong>Ressources</strong> ouvre le catalogue : renseignez le nom, la discipline et le coût unitaire, puis cliquez sur <strong>Ajouter</strong>.</li>
+          <li>Sélectionnez une ressource pour la modifier ou la supprimer. Une ressource déjà affectée ne peut pas être supprimée.</li>
+        </ul>
+
+        <h3>Affecter une ressource</h3>
+        <ul>
+          <li>Faites un clic droit sur l’activité, choisissez une ressource, saisissez sa charge en jours-personne, puis cliquez sur <strong>Ajouter</strong> et enregistrez.</li>
+          <li>Sélectionnez une affectation existante pour la modifier ou la retirer.</li>
+        </ul>
+
+        <h3>Contrôler le projet et les coûts</h3>
+        <ul>
+          <li><strong>Vérifier le projet</strong> affiche les erreurs et les besoins estimés en personnel.</li>
+          <li><strong>Tableau des affectations</strong> récapitule les charges et les coûts.</li>
+          <li><strong>Budget mensuel</strong> compare les coûts prévus au seuil saisi.</li>
+        </ul>
+
+        <h3>Enregistrer et imprimer</h3>
+        <ul>
+          <li><strong>Enregistrer</strong> télécharge une copie JSON du projet.</li>
+          <li><strong>Lier le fichier de travail</strong> autorise l’écriture directe dans un fichier lorsque le navigateur le permet.</li>
+          <li><strong>Imprimer</strong> prépare le planning pour l’impression.</li>
+        </ul>
+      </div>
+
+      <div class="actions">
+        <button type="submit">Fermer</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     "use strict";
 
@@ -1063,6 +1163,7 @@
     const boutonVerifierProjet = document.querySelector("#verifier-projet");
     const boutonBudgetMensuel = document.querySelector("#budget-mensuel");
     const boutonImprimerProjet = document.querySelector("#imprimer-projet");
+    const boutonOuvrirModeEmploi = document.querySelector("#ouvrir-mode-emploi");
     const boutonGererRessources = document.querySelector("#gerer-ressources");
     const fichierProjet = document.querySelector("#fichier-projet");
     const dialogueDetails = document.querySelector("#dialogue-details");
@@ -1099,6 +1200,7 @@
     const corpsTableauBudget = document.querySelector("#corps-tableau-budget");
     const avertissementBudget = document.querySelector("#avertissement-budget");
     const boutonFermerBudget = document.querySelector("#fermer-budget");
+    const dialogueModeEmploi = document.querySelector("#dialogue-mode-emploi");
     const dialogueVerification = document.querySelector("#dialogue-verification");
     const resumeVerification = document.querySelector("#resume-verification");
     const nombreErreurs = document.querySelector("#nombre-erreurs");
@@ -1236,6 +1338,10 @@
       if (evenement.target === dialogueBudget) dialogueBudget.close();
     });
     boutonImprimerProjet.addEventListener("click", () => window.print());
+    boutonOuvrirModeEmploi.addEventListener("click", () => dialogueModeEmploi.showModal());
+    dialogueModeEmploi.addEventListener("click", (evenement) => {
+      if (evenement.target === dialogueModeEmploi) dialogueModeEmploi.close();
+    });
     boutonGererRessources.addEventListener("click", ouvrirGestionRessources);
     fichierProjet.addEventListener("change", ouvrirProjet);
     window.addEventListener("beforeprint", preparerImpression);
@@ -2309,7 +2415,6 @@
       const identifiantsTaches = new Set();
       const identifiantsRessources = new Set();
       const ressourcesParIdentifiant = new Map();
-      const ressourcesUtilisees = new Set();
       const occupationsParRessource = new Map();
 
       ressourcesProjet.forEach((ressource) => {
@@ -2383,7 +2488,6 @@
             erreurs.push(`La ressource « ${nomRessource} » est affectée plusieurs fois à l’activité « ${nom} ».`);
           }
           affectationsVues.add(ressourceId);
-          ressourcesUtilisees.add(ressourceId);
           if (!Number.isFinite(duree) || duree <= 0) {
             erreurs.push(`La durée de « ${nomRessource} » dans l’activité « ${nom} » est invalide.`);
           } else if (Number.isFinite(dureeTache) && duree > dureeTache) {
@@ -2392,9 +2496,24 @@
 
           const debut = Number(tache.dataset.debutTot);
           const fin = Number(tache.dataset.finTot);
-          if (tache.dataset.debutTot && tache.dataset.finTot && Number.isFinite(debut) && Number.isFinite(fin)) {
+          if (
+            tache.dataset.debutTot
+            && tache.dataset.finTot
+            && Number.isFinite(debut)
+            && Number.isFinite(fin)
+            && Number.isFinite(duree)
+            && duree > 0
+            && Number.isFinite(dureeTache)
+            && dureeTache > 0
+          ) {
             if (!occupationsParRessource.has(ressourceId)) occupationsParRessource.set(ressourceId, []);
-            occupationsParRessource.get(ressourceId).push({ tache, debut, fin });
+            occupationsParRessource.get(ressourceId).push({
+              tache,
+              debut,
+              fin,
+              charge: duree,
+              dureeActivite: dureeTache
+            });
           }
         });
 
@@ -2415,12 +2534,6 @@
           ) {
             erreurs.push(`La durée et les dates calculées de l’activité « ${nom} » ne correspondent pas.`);
           }
-        }
-      });
-
-      ressourcesProjet.forEach((ressource) => {
-        if (!ressourcesUtilisees.has(ressource.id)) {
-          avertissements.push(`La ressource « ${ressource.nom} — ${ressource.discipline} » n’est utilisée dans aucune activité.`);
         }
       });
 
@@ -2475,20 +2588,62 @@
 
       occupationsParRessource.forEach((occupations, ressourceId) => {
         const ressource = ressourcesParIdentifiant.get(ressourceId);
-        for (let i = 0; i < occupations.length; i += 1) {
-          for (let j = i + 1; j < occupations.length; j += 1) {
-            const a = occupations[i];
-            const b = occupations[j];
-            if (a.debut < b.fin && b.debut < a.fin) {
-              avertissements.push(
-                `La ressource « ${ressource.nom} — ${ressource.discipline} » est utilisée sur des périodes qui se chevauchent dans « ${a.tache.dataset.nom} » et « ${b.tache.dataset.nom} ».`
-              );
-            }
-          }
-        }
+        calculerBesoinsPersonnel(occupations).forEach((besoin) => {
+          const personnes = besoin.personnes;
+          const chargeMoyenne = Math.round(besoin.chargeMoyenneMaximale * 100) / 100;
+          avertissements.push(
+            `Ressource « ${ressource.nom} — ${ressource.discipline} » : besoin estimé de ${personnes} personnes du ${formaterDateCourte(besoin.debut)} au ${formaterDateCourte(besoin.fin)} (charge moyenne maximale : ${formatDuree(chargeMoyenne)} personne).`
+          );
+        });
       });
 
       afficherRapportVerification(erreurs, avertissements);
+    }
+
+    function calculerBesoinsPersonnel(occupations) {
+      const bornes = [...new Set(occupations.flatMap((occupation) => [
+        occupation.debut,
+        occupation.fin
+      ]))].sort((a, b) => a - b);
+      const besoins = [];
+
+      for (let index = 0; index < bornes.length - 1; index += 1) {
+        const debut = bornes[index];
+        const fin = bornes[index + 1];
+        const chargeMoyenne = occupations
+          .filter((occupation) => occupation.debut < fin && occupation.fin > debut)
+          .reduce((total, occupation) => (
+            total + occupation.charge / occupation.dureeActivite
+          ), 0);
+        const personnes = Math.ceil(chargeMoyenne - 1e-10);
+        if (personnes <= 1) continue;
+
+        const besoinPrecedent = besoins[besoins.length - 1];
+        if (
+          besoinPrecedent
+          && besoinPrecedent.fin === debut
+          && besoinPrecedent.personnes === personnes
+        ) {
+          besoinPrecedent.fin = fin;
+          besoinPrecedent.chargeMoyenneMaximale = Math.max(
+            besoinPrecedent.chargeMoyenneMaximale,
+            chargeMoyenne
+          );
+        } else {
+          besoins.push({
+            debut,
+            fin,
+            personnes,
+            chargeMoyenneMaximale: chargeMoyenne
+          });
+        }
+      }
+
+      return besoins;
+    }
+
+    function formaterDateCourte(timestamp) {
+      return new Intl.DateTimeFormat("fr-FR").format(new Date(timestamp));
     }
 
     function afficherRapportVerification(erreurs, avertissements) {
@@ -2891,8 +3046,35 @@
         resumeBudget.textContent = "Aucun coût daté ne peut être réparti mensuellement.";
         ajouterLigneBudgetVide("Aucune activité datée avec un coût.");
       } else {
+        const coutsMensuels = [...coutsParMois.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([cle, cout]) => {
+            const coutExactEnCentimes = cout * 100;
+            const coutEnCentimes = Math.floor(coutExactEnCentimes + 1e-9);
+            return {
+              cle,
+              coutEnCentimes,
+              reste: coutExactEnCentimes - coutEnCentimes
+            };
+          });
+        const coutTotalEnCentimes = Math.round(
+          [...coutsParMois.values()].reduce((total, cout) => total + cout, 0) * 100
+        );
+        let centimesARepartir = coutTotalEnCentimes - coutsMensuels.reduce(
+          (total, mois) => total + mois.coutEnCentimes,
+          0
+        );
+        [...coutsMensuels]
+          .sort((a, b) => b.reste - a.reste)
+          .forEach((mois) => {
+            if (centimesARepartir <= 0) return;
+            mois.coutEnCentimes += 1;
+            centimesARepartir -= 1;
+          });
+
         let nombreDepassements = 0;
-        [...coutsParMois.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([cle, cout]) => {
+        coutsMensuels.forEach(({ cle, coutEnCentimes }) => {
+          const cout = coutEnCentimes / 100;
           const [annee, mois] = cle.split("-").map(Number);
           const libelle = new Intl.DateTimeFormat("fr-FR", {
             month: "long",
@@ -2988,7 +3170,7 @@
     }
 
     function afficherProjet(projet) {
-      ressourcesProjet = fusionnerRessources(projet.ressources, lireCatalogueRessourcesLocal());
+      ressourcesProjet = projet.ressources.map((ressource) => ({ ...ressource }));
       seuilBudgetMensuel = projet.seuilBudgetMensuel;
       viderProjet();
       champUnite.value = projet.unite;
