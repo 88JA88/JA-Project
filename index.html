@@ -894,6 +894,7 @@
         <h1>Réseau PERT</h1>
         <span class="separateur-titre" aria-hidden="true">—</span>
         <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
+        <button id="ouvrir-demonstration" class="bouton-barre" type="button">Démo</button>
         <button id="nouveau-projet" class="bouton-barre" type="button">Nouveau projet</button>
         <button id="gerer-ressources" class="bouton-barre" type="button">Ressources</button>
         <div class="parametre-unite">
@@ -1108,8 +1109,9 @@
       <div class="contenu-mode-emploi">
         <h3>Ouvrir ou démarrer un planning</h3>
         <ul>
-          <li>Au démarrage, le fichier <strong>planning.json</strong> est chargé automatiquement s’il est accessible.</li>
-          <li><strong>Ouvrir</strong> permet de choisir un autre fichier JSON.</li>
+          <li>Au démarrage, le dernier projet personnel mémorisé est repris ; sinon le planning reste vide.</li>
+          <li><strong>Ouvrir</strong> permet de choisir un fichier JSON personnel.</li>
+          <li><strong>Démo</strong> charge le fichier de démonstration uniquement sur demande.</li>
           <li><strong>Nouveau projet</strong> efface le planning affiché après confirmation.</li>
         </ul>
 
@@ -1180,6 +1182,7 @@
     const boutonNouveauProjet = document.querySelector("#nouveau-projet");
     const boutonEnregistrerProjet = document.querySelector("#enregistrer-projet");
     const boutonOuvrirProjet = document.querySelector("#ouvrir-projet");
+    const boutonOuvrirDemonstration = document.querySelector("#ouvrir-demonstration");
     const boutonLierFichierTravail = document.querySelector("#lier-fichier-travail");
     const boutonVerifierProjet = document.querySelector("#verifier-projet");
     const boutonBudgetMensuel = document.querySelector("#budget-mensuel");
@@ -1235,33 +1238,11 @@
     const MILLISECONDES_PAR_MINUTE = 60 * 1000;
     const MILLISECONDES_PAR_HEURE = 60 * MILLISECONDES_PAR_MINUTE;
     const MILLISECONDES_PAR_JOUR = 24 * MILLISECONDES_PAR_HEURE;
-    const CLE_SAUVEGARDE_LOCALE = "planning-reseau-sauvegarde-automatique-v2";
+    const CLE_SAUVEGARDE_LOCALE = location.hostname === "88ja88.github.io"
+      ? "planning-reseau-sauvegarde-automatique-v3"
+      : "planning-reseau-sauvegarde-automatique-v2";
     const CLE_CATALOGUE_RESSOURCES = "planning-reseau-catalogue-ressources-v2";
     const MESSAGE_DUREE_RESSOURCE = "La durée d’une ressource ne peut pas dépasser celle de l’activité. Augmentez la durée de l’activité ou modifiez l’affectation des ressources.";
-    const PROJET_DEMONSTRATION = {
-      format: "planning-reseau",
-      version: 1,
-      unite: "j",
-      ressources: [
-        { id: "r1", nom: "Res 2", discipline: "Discipline C", coutUnitaire: 0 },
-        { id: "r2", nom: "Res 3", discipline: "Discipline F", coutUnitaire: 0 }
-      ],
-      taches: [
-        { id: "1", nom: "Recueil des données existantes", objet: "Regrouper les arrêtés du 05/06/2022 et les normes dans Légifrance", description: "", ressources: [], duree: 5, x: 25, y: 280, contrainteDebut: "2026-08-20" },
-        { id: "2", nom: "propositions des membres de l'équipe", objet: "Interprétation de leurs activités à effectuer", description: "", ressources: [], duree: 3, x: 696, y: 278, contrainteDebut: "" },
-        { id: "3", nom: "Réunions sectorielles", objet: "Objectifs et préparation", description: "", ressources: [{ ressourceId: "r1", duree: 2 }, { ressourceId: "r2", duree: 1 }], duree: 8, x: 359, y: 281, contrainteDebut: "" },
-        { id: "4", nom: "Répartition du travail", objet: "Assignations des activités à effectuer", description: "", ressources: [], duree: 4, x: 357, y: 2, contrainteDebut: "" },
-        { id: "5", nom: "Appels à contribution", objet: "Recueillir des propositions de participation", description: "", ressources: [], duree: 3, x: 359, y: 551, contrainteDebut: "" }
-      ],
-      liaisons: [
-        { source: "1", cible: "3" },
-        { source: "1", cible: "4" },
-        { source: "4", cible: "2" },
-        { source: "3", cible: "2" },
-        { source: "1", cible: "5" },
-        { source: "5", cible: "2" }
-      ]
-    };
     let positionCreation = { x: 0, y: 0 };
     let prochainIdentifiant = 1;
     let liaisons = [];
@@ -1346,6 +1327,7 @@
     boutonNouveauProjet.addEventListener("click", creerNouveauProjet);
     boutonEnregistrerProjet.addEventListener("click", enregistrerProjet);
     boutonOuvrirProjet.addEventListener("click", () => fichierProjet.click());
+    boutonOuvrirDemonstration.addEventListener("click", ouvrirDemonstration);
     boutonLierFichierTravail.addEventListener("click", lierFichierTravail);
     boutonVerifierProjet.addEventListener("click", verifierProjet);
     boutonBudgetMensuel.addEventListener("click", ouvrirControleBudget);
@@ -3281,9 +3263,7 @@
       enregistrerRessources();
     }
 
-    async function chargerProjetDemonstration() {
-      let donnees = PROJET_DEMONSTRATION;
-
+    function chargerProjetInitial() {
       try {
         const sauvegardeLocale = localStorage.getItem(CLE_SAUVEGARDE_LOCALE);
         if (sauvegardeLocale) {
@@ -3293,20 +3273,47 @@
           return;
         }
       } catch (erreur) {
-        // Le projet de démonstration est utilisé si la sauvegarde locale est illisible.
+        // Le projet reste vide si la sauvegarde locale est illisible.
+      }
+
+      chargementInitialActif = false;
+      actualiserUnite();
+      actualiserResumeRessources();
+    }
+
+    async function ouvrirDemonstration() {
+      const projetActuelNonVide = zoneTravail.querySelector(".tache") !== null;
+      if (
+        projetActuelNonVide
+        && !window.confirm("Ouvrir la démonstration remplacera le planning actuellement affiché. Continuer ?")
+      ) {
+        return;
       }
 
       try {
-        const reponse = await fetch("planning.json", { cache: "no-store" });
-        if (!reponse.ok) throw new Error("Projet de démonstration inaccessible");
-        donnees = await reponse.json();
+        const reponse = await fetch("planning-demo.json", { cache: "no-store" });
+        if (!reponse.ok) throw new Error("Démonstration inaccessible");
+        const projet = normaliserProjet(await reponse.json());
+        const sauvegardeAvantDemonstration = localStorage.getItem(CLE_SAUVEGARDE_LOCALE);
+        const catalogueAvantDemonstration = localStorage.getItem(CLE_CATALOGUE_RESSOURCES);
+        chargementInitialActif = false;
+        fichierTravailLie = null;
+        boutonLierFichierTravail.removeAttribute("title");
+        afficherProjet(projet);
+        restaurerValeurLocale(CLE_SAUVEGARDE_LOCALE, sauvegardeAvantDemonstration);
+        restaurerValeurLocale(CLE_CATALOGUE_RESSOURCES, catalogueAvantDemonstration);
       } catch (erreur) {
-        // La copie intégrée est utilisée quand le navigateur bloque l'accès au fichier local.
+        window.alert("Le fichier de démonstration n’est pas accessible.");
       }
+    }
 
-      if (!chargementInitialActif) return;
-      chargementInitialActif = false;
-      afficherProjet(normaliserProjet(donnees));
+    function restaurerValeurLocale(cle, valeur) {
+      try {
+        if (valeur === null) localStorage.removeItem(cle);
+        else localStorage.setItem(cle, valeur);
+      } catch (erreur) {
+        // La démonstration reste utilisable si le navigateur refuse le stockage local.
+      }
     }
 
     function normaliserProjet(donnees) {
@@ -3527,7 +3534,7 @@
       return Math.min(Math.max(valeur, minimum), maximum);
     }
 
-    chargerProjetDemonstration();
+    chargerProjetInitial();
   </script>
 </body>
 </html>
