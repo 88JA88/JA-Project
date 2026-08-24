@@ -4,18 +4,18 @@
 
 - Les règles permanentes sont consignées dans `AGENTS.md`.
 - Aucune modification du programme ne doit être effectuée sans l’accord préalable de l’utilisateur.
-- Le présent état a été établi par lecture de `Reseau_PERT.html` et de `planning.json` (noms actuels des fichiers précédemment nommés `index.html` et `planning-2026-08-13 (2).json`).
+- Le présent état a été établi par lecture de `index.html` et de `planning.json` dans l’emplacement actuel du projet. Le programme avait temporairement porté le nom `Reseau_PERT.html`.
 
 ## Fichiers principaux examinés
 
-- `Reseau_PERT.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 451 lignes, 121 247 octets après l’ajout du mode d’emploi).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 566 lignes, 125 240 octets après l’ajustement de la disposition sur iPad).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
-## Fonctionnalités présentes dans `Reseau_PERT.html`
+## Fonctionnalités présentes dans `index.html`
 
-- Création, édition, déplacement, sélection et suppression d’activités.
-- Création, sélection et suppression de liaisons entre activités, avec prévention des cycles.
+- Création, édition, déplacement, sélection et suppression d’activités. Sur iPad, un appui long immobile de 0,7 seconde ouvre la fiche de description et de ressources.
+- Création, sélection et suppression de liaisons entre activités, avec prévention des cycles. Sur écran tactile, un appui long de 0,7 seconde sur une flèche propose sa suppression après confirmation.
 - Calcul du planning à partir des dépendances et des contraintes de début : dates au plus tôt, dates au plus tard, marges, activités et liaisons critiques.
 - Gestion d’un catalogue de ressources avec nom, discipline et coût unitaire.
 - Affectation de ressources aux activités avec durée d’intervention et calcul des coûts.
@@ -26,6 +26,7 @@
 - Sauvegarde automatique du planning et du catalogue de ressources dans le stockage local du navigateur.
 - Impression du réseau avec mise à l’échelle automatique.
 - Mode d’emploi succinct accessible dans une fenêtre par un bouton placé à côté d’« Imprimer ».
+- Sur écran tactile, la date de début est resserrée contre le calendrier et séparée de la liste des ressources.
 - Au démarrage, l’application essaie successivement la sauvegarde locale, le fichier `planning.json`, puis le projet de démonstration intégré.
 
 ## État des données dans `planning.json`
@@ -107,6 +108,12 @@
 - Allègement validé du libellé des besoins estimés : « organisation à confirmer avec la ressource », sans le mot « manuellement ».
 - Suppression validée de toute proposition dans les avertissements de charge. Le rapport conserve uniquement le diagnostic compact afin de laisser davantage de place à un planning plus long.
 - Ajout validé dans `Reseau_PERT.html` d’un bouton « Mode d’emploi » à côté d’« Imprimer ». Il ouvre une fenêtre d’aide centrée sur les manipulations, avec contenu défilable et bouton de fermeture ; le test dans le navigateur confirme son ouverture et sa fermeture. `planning.json` n’a pas été modifié.
+
+- Ajout validé dans `index.html` de la suppression tactile d’une liaison : appui long de 0,7 seconde sur la flèche, confirmation obligatoire, annulation si le doigt se déplace de plus de 10 px. Le toucher simple et la suppression au clavier restent inchangés. Le mode d’emploi a été actualisé et le JavaScript passe le contrôle de syntaxe. `planning.json` n’a pas été modifié.
+
+- Ajout validé dans `index.html` de l’accès tactile à la fiche d’une activité : un appui long immobile de 0,7 seconde reproduit le clic droit, tandis qu’un déplacement de plus de 10 px annule l’ouverture et conserve le glisser-déposer. Les aides à l’écran ont été actualisées. Contrôle de syntaxe réussi et tests ciblés réussis pour l’ouverture et l’annulation sur déplacement. `planning.json` n’a pas été modifié.
+
+- Correction validée dans `index.html` de la disposition sur iPad : la zone calendrier et date de début occupe 99 px, les ressources commencent à 108 px et ne la chevauchent plus. La présentation sur ordinateur reste inchangée. Contrôle de syntaxe et contrôle des dimensions réussis. `planning.json` n’a pas été modifié.
 
 ## Prochaine étape proposée
 
