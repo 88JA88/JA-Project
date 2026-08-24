@@ -1274,6 +1274,7 @@
     let seuilBudgetMensuel = 0;
     let fichierTravailLie = null;
     let ouvertureProjetEnCours = false;
+    let chargementInitialActif = true;
     let ecritureFichierTravail = Promise.resolve();
     let rafraichissementGraphiqueProgramme = 0;
     const observateurDimensionsTaches = typeof ResizeObserver === "function"
@@ -2789,6 +2790,7 @@
       }
 
       await ecritureFichierTravail.catch(() => {});
+      chargementInitialActif = false;
       ouvertureProjetEnCours = true;
       fichierTravailLie = null;
       boutonLierFichierTravail.removeAttribute("title");
@@ -2876,6 +2878,7 @@
           if (!remplacer) return;
         }
 
+        chargementInitialActif = false;
         fichierTravailLie = fichier;
         ouvertureProjetEnCours = true;
         afficherProjet(projet);
@@ -3235,6 +3238,7 @@
           if (!remplacer) return;
         }
 
+        chargementInitialActif = false;
         afficherProjet(projet);
       } catch (erreur) {
         window.alert("Ce fichier ne contient pas un projet de planning valide.");
@@ -3283,7 +3287,9 @@
       try {
         const sauvegardeLocale = localStorage.getItem(CLE_SAUVEGARDE_LOCALE);
         if (sauvegardeLocale) {
-          afficherProjet(normaliserProjet(JSON.parse(sauvegardeLocale)));
+          const projetLocal = normaliserProjet(JSON.parse(sauvegardeLocale));
+          chargementInitialActif = false;
+          afficherProjet(projetLocal);
           return;
         }
       } catch (erreur) {
@@ -3298,6 +3304,8 @@
         // La copie intégrée est utilisée quand le navigateur bloque l'accès au fichier local.
       }
 
+      if (!chargementInitialActif) return;
+      chargementInitialActif = false;
       afficherProjet(normaliserProjet(donnees));
     }
 

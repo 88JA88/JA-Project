@@ -8,7 +8,7 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 525 lignes, 123 696 octets après le remplacement de la suppression tactile des liaisons).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 533 lignes, 124 019 octets après la correction du conflit de chargement GitHub).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
@@ -89,6 +89,8 @@
 4. **Corrigée le 14 août 2026.** Les coûts mensuels sont désormais répartis en centimes selon la méthode des plus forts restes. Leur somme affichée est garantie égale au coût daté total arrondi : 9 853,13 € + 3 071,87 € = 12 925,00 € avec le planning actuel.
 5. **Corrigée le 14 août 2026 après clarification métier.** Les cinq anciens avertissements de chevauchement par paire sont remplacés par deux diagnostics consolidés : 2 personnes du 25 au 28 août 2026 pour « Res 1 — Discipline A » (charge moyenne maximale 1,15 personne) et 2 personnes sur la même période pour « Res 3 — Discipline C » (charge moyenne maximale 1,08 personne). Le rapport ne formule aucune proposition d’action.
 
+6. **Corrigée le 24 août 2026.** Sur GitHub Pages, le chargement asynchrone de `planning.json` pouvait se terminer après l’ouverture d’un JSON personnel et remplacer celui-ci par la démonstration intégrée. Toute ouverture, liaison ou création volontaire annule désormais définitivement ce chargement initial.
+
 ## Fait lors de cette intervention
 
 - Création de `AGENTS.md` à partir des règles permanentes de référence.
@@ -116,6 +118,8 @@
 - Correction validée dans `index.html` de la disposition sur iPad : la zone calendrier et date de début occupe 99 px, les ressources commencent à 108 px et ne la chevauchent plus. La présentation sur ordinateur reste inchangée. Contrôle de syntaxe et contrôle des dimensions réussis. `planning.json` n’a pas été modifié.
 
 - Après le test réel sur iPad ayant montré que l’appui long sur une flèche SVG n’était pas fiable, remplacement validé dans `index.html` par une séquence explicite : premier toucher pour sélectionner la flèche en bleu, second toucher sur cette même flèche pour demander confirmation, puis suppression après accord. Les touches Suppr et Retour arrière restent disponibles avec un clavier. Le mode d’emploi a été actualisé et le contrôle de syntaxe est réussi. `planning.json` n’a pas été modifié.
+
+- Correction validée dans `index.html` du conflit de chargement sur GitHub Pages : un JSON personnel ouvert pendant l’attente de `planning.json` ne peut plus être remplacé ensuite par la démonstration. Le même garde-fou s’applique à « Lier le fichier de travail » et « Nouveau projet ». Contrôle de syntaxe réussi et test asynchrone ciblé réussi avec retour 404 simulé. `planning.json` n’a pas été modifié.
 
 ## Prochaine étape proposée
 
