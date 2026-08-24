@@ -8,9 +8,8 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 540 lignes, 123 880 octets après la séparation de la démonstration).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 501 lignes, 122 048 octets après la suppression complète de la démonstration).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
-- `planning-demo.json` : démonstration séparée, chargée uniquement sur demande par le bouton « Démo ».
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
 ## Fonctionnalités présentes dans `index.html`
@@ -28,7 +27,7 @@
 - Impression du réseau avec mise à l’échelle automatique.
 - Mode d’emploi succinct accessible dans une fenêtre par un bouton placé à côté d’« Imprimer ».
 - Sur écran tactile, la date de début est resserrée contre le calendrier et séparée de la liste des ressources.
-- Au démarrage, l’application reprend uniquement le dernier projet personnel mémorisé ; en l’absence de sauvegarde, le planning reste vide. La démonstration n’est jamais chargée automatiquement.
+- Au démarrage, l’application reprend uniquement le dernier projet personnel mémorisé ; en l’absence de sauvegarde, le planning reste vide. Aucun projet de démonstration n’est inclus ni chargé.
 
 ## État des données dans `planning.json`
 
@@ -91,7 +90,8 @@
 5. **Corrigée le 14 août 2026 après clarification métier.** Les cinq anciens avertissements de chevauchement par paire sont remplacés par deux diagnostics consolidés : 2 personnes du 25 au 28 août 2026 pour « Res 1 — Discipline A » (charge moyenne maximale 1,15 personne) et 2 personnes sur la même période pour « Res 3 — Discipline C » (charge moyenne maximale 1,08 personne). Le rapport ne formule aucune proposition d’action.
 
 6. **Corrigée le 24 août 2026.** Sur GitHub Pages, le chargement asynchrone de `planning.json` pouvait se terminer après l’ouverture d’un JSON personnel et remplacer celui-ci par la démonstration intégrée. Toute ouverture, liaison ou création volontaire annule désormais définitivement ce chargement initial.
-7. **Corrigée le 24 août 2026.** La démonstration est désormais entièrement séparée du démarrage : elle réside dans `planning-demo.json` et ne s’ouvre que par le bouton « Démo ». L’ancienne sauvegarde automatique de la démo sur GitHub Pages est neutralisée sans modifier la sauvegarde locale utilisée par le fichier HTML ouvert directement sur l’ordinateur.
+7. **Solution intermédiaire retirée le 24 août 2026.** La démonstration avait été séparée dans `planning-demo.json` et rendue accessible par un bouton « Démo ».
+8. **Corrigée le 24 août 2026.** À la demande de l’utilisateur, `planning-demo.json`, le bouton « Démo » et tout le code associé sont supprimés. La clé de sauvegarde GitHub Pages est renouvelée afin que toute ancienne démo déjà mémorisée soit également ignorée, sans modifier la sauvegarde utilisée par le fichier HTML ouvert directement sur l’ordinateur.
 
 ## Fait lors de cette intervention
 
@@ -123,6 +123,7 @@
 
 - Correction validée dans `index.html` du conflit de chargement sur GitHub Pages : un JSON personnel ouvert pendant l’attente de `planning.json` ne peut plus être remplacé ensuite par la démonstration. Le même garde-fou s’applique à « Lier le fichier de travail » et « Nouveau projet ». Contrôle de syntaxe réussi et test asynchrone ciblé réussi avec retour 404 simulé. `planning.json` n’a pas été modifié.
 - Suppression validée de tout chargement automatique de la démonstration. Ajout du bouton « Démo » et du fichier indépendant `planning-demo.json`, réactualisable séparément. Le projet personnel mémorisé est repris au démarrage ; sinon le planning reste vide. La consultation de la démonstration préserve la sauvegarde personnelle existante. Syntaxe JavaScript et JSON contrôlée.
+- Suppression complète validée de la solution de démonstration : retrait du bouton et du code, suppression de `planning-demo.json` et neutralisation de toute copie antérieure mémorisée sur GitHub Pages. Le démarrage est désormais strictement limité à un projet personnel mémorisé ou à un planning vide.
 
 ## Prochaine étape proposée
 

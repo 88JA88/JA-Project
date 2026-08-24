@@ -894,7 +894,6 @@
         <h1>Réseau PERT</h1>
         <span class="separateur-titre" aria-hidden="true">—</span>
         <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
-        <button id="ouvrir-demonstration" class="bouton-barre" type="button">Démo</button>
         <button id="nouveau-projet" class="bouton-barre" type="button">Nouveau projet</button>
         <button id="gerer-ressources" class="bouton-barre" type="button">Ressources</button>
         <div class="parametre-unite">
@@ -1111,7 +1110,6 @@
         <ul>
           <li>Au démarrage, le dernier projet personnel mémorisé est repris ; sinon le planning reste vide.</li>
           <li><strong>Ouvrir</strong> permet de choisir un fichier JSON personnel.</li>
-          <li><strong>Démo</strong> charge le fichier de démonstration uniquement sur demande.</li>
           <li><strong>Nouveau projet</strong> efface le planning affiché après confirmation.</li>
         </ul>
 
@@ -1182,7 +1180,6 @@
     const boutonNouveauProjet = document.querySelector("#nouveau-projet");
     const boutonEnregistrerProjet = document.querySelector("#enregistrer-projet");
     const boutonOuvrirProjet = document.querySelector("#ouvrir-projet");
-    const boutonOuvrirDemonstration = document.querySelector("#ouvrir-demonstration");
     const boutonLierFichierTravail = document.querySelector("#lier-fichier-travail");
     const boutonVerifierProjet = document.querySelector("#verifier-projet");
     const boutonBudgetMensuel = document.querySelector("#budget-mensuel");
@@ -1239,7 +1236,7 @@
     const MILLISECONDES_PAR_HEURE = 60 * MILLISECONDES_PAR_MINUTE;
     const MILLISECONDES_PAR_JOUR = 24 * MILLISECONDES_PAR_HEURE;
     const CLE_SAUVEGARDE_LOCALE = location.hostname === "88ja88.github.io"
-      ? "planning-reseau-sauvegarde-automatique-v3"
+      ? "planning-reseau-sauvegarde-automatique-v4"
       : "planning-reseau-sauvegarde-automatique-v2";
     const CLE_CATALOGUE_RESSOURCES = "planning-reseau-catalogue-ressources-v2";
     const MESSAGE_DUREE_RESSOURCE = "La durée d’une ressource ne peut pas dépasser celle de l’activité. Augmentez la durée de l’activité ou modifiez l’affectation des ressources.";
@@ -1327,7 +1324,6 @@
     boutonNouveauProjet.addEventListener("click", creerNouveauProjet);
     boutonEnregistrerProjet.addEventListener("click", enregistrerProjet);
     boutonOuvrirProjet.addEventListener("click", () => fichierProjet.click());
-    boutonOuvrirDemonstration.addEventListener("click", ouvrirDemonstration);
     boutonLierFichierTravail.addEventListener("click", lierFichierTravail);
     boutonVerifierProjet.addEventListener("click", verifierProjet);
     boutonBudgetMensuel.addEventListener("click", ouvrirControleBudget);
@@ -3279,41 +3275,6 @@
       chargementInitialActif = false;
       actualiserUnite();
       actualiserResumeRessources();
-    }
-
-    async function ouvrirDemonstration() {
-      const projetActuelNonVide = zoneTravail.querySelector(".tache") !== null;
-      if (
-        projetActuelNonVide
-        && !window.confirm("Ouvrir la démonstration remplacera le planning actuellement affiché. Continuer ?")
-      ) {
-        return;
-      }
-
-      try {
-        const reponse = await fetch("planning-demo.json", { cache: "no-store" });
-        if (!reponse.ok) throw new Error("Démonstration inaccessible");
-        const projet = normaliserProjet(await reponse.json());
-        const sauvegardeAvantDemonstration = localStorage.getItem(CLE_SAUVEGARDE_LOCALE);
-        const catalogueAvantDemonstration = localStorage.getItem(CLE_CATALOGUE_RESSOURCES);
-        chargementInitialActif = false;
-        fichierTravailLie = null;
-        boutonLierFichierTravail.removeAttribute("title");
-        afficherProjet(projet);
-        restaurerValeurLocale(CLE_SAUVEGARDE_LOCALE, sauvegardeAvantDemonstration);
-        restaurerValeurLocale(CLE_CATALOGUE_RESSOURCES, catalogueAvantDemonstration);
-      } catch (erreur) {
-        window.alert("Le fichier de démonstration n’est pas accessible.");
-      }
-    }
-
-    function restaurerValeurLocale(cle, valeur) {
-      try {
-        if (valeur === null) localStorage.removeItem(cle);
-        else localStorage.setItem(cle, valeur);
-      } catch (erreur) {
-        // La démonstration reste utilisable si le navigateur refuse le stockage local.
-      }
     }
 
     function normaliserProjet(donnees) {
