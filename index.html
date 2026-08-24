@@ -1126,7 +1126,7 @@
         <h3>Créer ou supprimer une liaison</h3>
         <ul>
           <li>Faites glisser le rond bleu d’une activité vers l’activité suivante.</li>
-          <li>Sur iPad, maintenez le doigt sur la flèche puis confirmez sa suppression. Avec un clavier, sélectionnez la flèche puis appuyez sur <strong>Suppr</strong> ou <strong>Retour arrière</strong>.</li>
+          <li>Sur iPad, touchez la flèche pour la sélectionner, puis touchez une seconde fois la flèche bleue et confirmez sa suppression. Avec un clavier, sélectionnez la flèche puis appuyez sur <strong>Suppr</strong> ou <strong>Retour arrière</strong>.</li>
         </ul>
 
         <h3>Gérer les ressources</h3>
@@ -2122,57 +2122,16 @@
       coucheLiaisons.appendChild(groupe);
 
       const liaison = { source, cible, groupe, ligneVisible, ligneCible };
-      let minuterieAppuiLong = null;
-      let pointeurAppuiLong = null;
-      let departAppuiLong = null;
-      let ignorerProchainClic = false;
+      ligneCible.addEventListener("click", (evenement) => {
+        evenement.stopPropagation();
 
-      function annulerAppuiLong() {
-        window.clearTimeout(minuterieAppuiLong);
-        minuterieAppuiLong = null;
-        pointeurAppuiLong = null;
-        departAppuiLong = null;
-      }
-
-      ligneCible.addEventListener("pointerdown", (evenement) => {
-        if (evenement.pointerType === "mouse" || evenement.button !== 0) return;
-
-        annulerAppuiLong();
-        pointeurAppuiLong = evenement.pointerId;
-        departAppuiLong = { x: evenement.clientX, y: evenement.clientY };
-        ligneCible.setPointerCapture?.(evenement.pointerId);
-
-        minuterieAppuiLong = window.setTimeout(() => {
-          minuterieAppuiLong = null;
-          pointeurAppuiLong = null;
-          departAppuiLong = null;
-          ignorerProchainClic = true;
-          selectionnerActivite(null);
-          selectionnerLiaison(liaison);
-
+        if (liaison === liaisonSelectionnee) {
           if (window.confirm("Supprimer cette liaison ?")) {
             supprimerLiaisonSelectionnee();
           }
-        }, DUREE_APPUI_LONG);
-      });
-
-      ligneCible.addEventListener("pointermove", (evenement) => {
-        if (evenement.pointerId !== pointeurAppuiLong || !departAppuiLong) return;
-        const deplacementX = evenement.clientX - departAppuiLong.x;
-        const deplacementY = evenement.clientY - departAppuiLong.y;
-        if (Math.hypot(deplacementX, deplacementY) > TOLERANCE_APPUI_LONG) {
-          annulerAppuiLong();
-        }
-      });
-
-      ligneCible.addEventListener("pointerup", annulerAppuiLong);
-      ligneCible.addEventListener("pointercancel", annulerAppuiLong);
-      ligneCible.addEventListener("click", (evenement) => {
-        evenement.stopPropagation();
-        if (ignorerProchainClic) {
-          ignorerProchainClic = false;
           return;
         }
+
         selectionnerActivite(null);
         selectionnerLiaison(liaison);
       });

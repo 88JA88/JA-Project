@@ -8,14 +8,14 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 566 lignes, 125 240 octets après l’ajustement de la disposition sur iPad).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 525 lignes, 123 696 octets après le remplacement de la suppression tactile des liaisons).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
 ## Fonctionnalités présentes dans `index.html`
 
 - Création, édition, déplacement, sélection et suppression d’activités. Sur iPad, un appui long immobile de 0,7 seconde ouvre la fiche de description et de ressources.
-- Création, sélection et suppression de liaisons entre activités, avec prévention des cycles. Sur écran tactile, un appui long de 0,7 seconde sur une flèche propose sa suppression après confirmation.
+- Création, sélection et suppression de liaisons entre activités, avec prévention des cycles. Sur écran tactile, un premier toucher sélectionne la flèche et un second toucher sur la flèche bleue propose sa suppression après confirmation.
 - Calcul du planning à partir des dépendances et des contraintes de début : dates au plus tôt, dates au plus tard, marges, activités et liaisons critiques.
 - Gestion d’un catalogue de ressources avec nom, discipline et coût unitaire.
 - Affectation de ressources aux activités avec durée d’intervention et calcul des coûts.
@@ -114,6 +114,8 @@
 - Ajout validé dans `index.html` de l’accès tactile à la fiche d’une activité : un appui long immobile de 0,7 seconde reproduit le clic droit, tandis qu’un déplacement de plus de 10 px annule l’ouverture et conserve le glisser-déposer. Les aides à l’écran ont été actualisées. Contrôle de syntaxe réussi et tests ciblés réussis pour l’ouverture et l’annulation sur déplacement. `planning.json` n’a pas été modifié.
 
 - Correction validée dans `index.html` de la disposition sur iPad : la zone calendrier et date de début occupe 99 px, les ressources commencent à 108 px et ne la chevauchent plus. La présentation sur ordinateur reste inchangée. Contrôle de syntaxe et contrôle des dimensions réussis. `planning.json` n’a pas été modifié.
+
+- Après le test réel sur iPad ayant montré que l’appui long sur une flèche SVG n’était pas fiable, remplacement validé dans `index.html` par une séquence explicite : premier toucher pour sélectionner la flèche en bleu, second toucher sur cette même flèche pour demander confirmation, puis suppression après accord. Les touches Suppr et Retour arrière restent disponibles avec un clavier. Le mode d’emploi a été actualisé et le contrôle de syntaxe est réussi. `planning.json` n’a pas été modifié.
 
 ## Prochaine étape proposée
 
