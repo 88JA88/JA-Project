@@ -142,7 +142,7 @@
     }
 
     #unite {
-      width: 62px;
+      width: 100px;
       height: 32px;
       margin: 0;
       padding: 5px 8px;
@@ -1166,7 +1166,11 @@
         <button id="ouvrir-calendrier" class="bouton-barre" type="button">Calendrier</button>
         <div class="parametre-unite">
           <label for="unite">Unité</label>
-          <input id="unite" type="text" value="j" maxlength="8" autocomplete="off" spellcheck="false">
+          <select id="unite">
+            <option value="j">Jour</option>
+            <option value="h">Heure</option>
+            <option value="sem">Semaine</option>
+          </select>
         </div>
         <button id="imprimer-projet" class="bouton-barre" type="button">Imprimer</button>
         <button id="ouvrir-mode-emploi" class="bouton-barre" type="button">Mode d’emploi</button>
@@ -1251,7 +1255,6 @@
 
         <div class="actions-affectation">
           <button id="ajouter-affectation" type="button">Ajouter</button>
-          <button id="modifier-affectation" type="button" disabled>Modifier</button>
           <button id="retirer-affectation" type="button" disabled>Retirer</button>
         </div>
 
@@ -1481,6 +1484,7 @@
           <li>Faites un clic droit sur une activité pour saisir sa description et ses ressources. Sur iPad, maintenez le doigt sur l’activité.</li>
           <li>Cliquez sur une activité, puis sur <strong>Supprimer l’activité</strong>, pour l’effacer.</li>
           <li>Utilisez l’icône calendrier pour fixer une date de début au plus tôt.</li>
+          <li>Le menu <strong>Unité</strong> propose Jour, Heure ou Semaine ; une semaine représente 5 jours ouvrés ou 7 jours calendaires.</li>
         </ul>
 
         <h3>Créer ou supprimer une liaison</h3>
@@ -1498,8 +1502,8 @@
 
         <h3>Affecter une ressource</h3>
         <ul>
-          <li>Faites un clic droit sur l’activité, choisissez une ressource, saisissez sa charge en jours-personne, puis cliquez sur <strong>Ajouter</strong> et enregistrez.</li>
-          <li>Sélectionnez une affectation existante pour la modifier ou la retirer.</li>
+          <li>Faites un clic droit sur l’activité, choisissez une ressource, saisissez sa charge dans l’unité du projet, puis cliquez sur <strong>Ajouter</strong> et enregistrez.</li>
+          <li>Sélectionnez une affectation existante et modifiez sa durée : <strong>Enregistrer</strong> applique directement la saisie.</li>
         </ul>
 
         <h3>Contrôler le projet et les coûts</h3>
@@ -1562,7 +1566,6 @@
     const uniteDureeRessource = document.querySelector("#unite-duree-ressource");
     const listeAffectations = document.querySelector("#liste-affectations");
     const boutonAjouterAffectation = document.querySelector("#ajouter-affectation");
-    const boutonModifierAffectation = document.querySelector("#modifier-affectation");
     const boutonRetirerAffectation = document.querySelector("#retirer-affectation");
     const coutTotalActivite = document.querySelector("#cout-total-activite");
     const dialogueRessources = document.querySelector("#dialogue-ressources");
@@ -1677,12 +1680,12 @@
 
     listeAffectations.addEventListener("change", selectionnerAffectationDansListe);
     boutonAjouterAffectation.addEventListener("click", ajouterAffectation);
-    boutonModifierAffectation.addEventListener("click", modifierAffectation);
     boutonRetirerAffectation.addEventListener("click", retirerAffectation);
 
     formulaireDetails.addEventListener("submit", (evenement) => {
       evenement.preventDefault();
       if (!tacheDetails) return;
+      if (listeAffectations.value && !modifierAffectation()) return;
 
       tacheDetails.dataset.description = champDescription.value.trim();
       tacheDetails.dataset.ressources = JSON.stringify(affectationsDetails);
@@ -1699,12 +1702,7 @@
     boutonSupprimerRessource.addEventListener("click", supprimerRessource);
     boutonFermerRessources.addEventListener("click", () => dialogueRessources.close());
 
-    champUnite.addEventListener("input", actualiserUnite);
-
-    champUnite.addEventListener("blur", () => {
-      if (!champUnite.value.trim()) champUnite.value = "Un.";
-      actualiserUnite();
-    });
+    champUnite.addEventListener("change", actualiserUnite);
 
     boutonSupprimerActivite.addEventListener("click", supprimerActiviteSelectionnee);
     boutonNouveauProjet.addEventListener("click", creerNouveauProjet);
@@ -1965,7 +1963,6 @@
 
       listeAffectations.value = identifiantSelectionne;
       const selectionValide = Boolean(identifiantSelectionne);
-      boutonModifierAffectation.disabled = !selectionValide;
       boutonRetirerAffectation.disabled = !selectionValide;
     }
 
@@ -1974,7 +1971,6 @@
       const affectation = affectationsDetails.find((element) => (
         element.ressourceId === listeAffectations.value
       ));
-      boutonModifierAffectation.disabled = !affectation;
       boutonRetirerAffectation.disabled = !affectation;
       if (!affectation) return;
 
@@ -1996,24 +1992,25 @@
     }
 
     function modifierAffectation() {
-      if (!tacheDetails) return;
+      if (!tacheDetails) return false;
       const ancienIdentifiant = listeAffectations.value;
       const saisie = lireSaisieAffectation();
-      if (!ancienIdentifiant || !saisie) return;
+      if (!ancienIdentifiant || !saisie) return false;
       if (affectationsDetails.some((element) => (
         element.ressourceId === saisie.ressourceId
         && element.ressourceId !== ancienIdentifiant
       ))) {
         window.alert("Cette ressource est déjà affectée à l’activité.");
-        return;
+        return false;
       }
 
       const index = affectationsDetails.findIndex((element) => (
         element.ressourceId === ancienIdentifiant
       ));
-      if (index < 0) return;
+      if (index < 0) return false;
       affectationsDetails[index] = saisie;
       actualiserListeAffectations(saisie.ressourceId);
+      return true;
     }
 
     function retirerAffectation() {
@@ -2823,6 +2820,17 @@
       const valeur = margeEnMillisecondes / convertirDureeEnMillisecondes(1);
       const valeurArrondie = Math.round(valeur * 100) / 100;
       return `${formatDuree(valeurArrondie)} (${unite})`;
+    }
+
+    function formaterDureeAvecUnite(duree) {
+      const uniteSaisie = champUnite.value.trim() || "Un.";
+      const unite = uniteSaisie.toLocaleLowerCase("fr");
+      const pluriel = Math.abs(Number(duree)) !== 1;
+      if (["j", "jour", "jours"].includes(unite)) return `${formatDuree(duree)} ${pluriel ? "jours" : "jour"}`;
+      if (["h", "hr", "heure", "heures"].includes(unite)) return `${formatDuree(duree)} ${pluriel ? "heures" : "heure"}`;
+      if (["min", "mn", "minute", "minutes"].includes(unite)) return `${formatDuree(duree)} ${pluriel ? "minutes" : "minute"}`;
+      if (["sem", "semaine", "semaines"].includes(unite)) return `${formatDuree(duree)} ${pluriel ? "semaines" : "semaine"}`;
+      return `${formatDuree(duree)} ${uniteSaisie}`;
     }
 
     function convertirDureeEnMillisecondes(duree) {
@@ -3872,7 +3880,6 @@
       const pasGraduation = pasPossibles.find((pas) => pas * pixelsParUnite >= 82)
         || Math.ceil(82 / pixelsParUnite / 365) * 365;
       const largeurPas = pasGraduation * pixelsParUnite;
-      const uniteEnMinuscules = (champUnite.value.trim() || "Un.").toLocaleLowerCase("fr");
       const formatDate = new Intl.DateTimeFormat("fr-FR", millisecondesParUnite < MILLISECONDES_PAR_JOUR
         ? { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }
         : { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -3957,8 +3964,8 @@
           barre.className = `barre-gantt${critique ? " critique" : ""}`;
           barre.style.left = `${((debut - debutProjet) / millisecondesParUnite) * pixelsParUnite}px`;
           barre.style.width = `${Math.max(3, ((fin - debut) / millisecondesParUnite) * pixelsParUnite)}px`;
-          barre.textContent = formatDuree(Number(tache.dataset.duree));
-          barre.title = `${tache.dataset.nom} — du ${formatDate.format(new Date(debut))} au ${formatDate.format(new Date(fin))} — ${formatDuree(Number(tache.dataset.duree))} ${uniteEnMinuscules}`;
+          barre.textContent = formaterDureeAvecUnite(Number(tache.dataset.duree));
+          barre.title = `${tache.dataset.nom} — du ${formatDate.format(new Date(debut))} au ${formatDate.format(new Date(fin))} — ${formaterDureeAvecUnite(Number(tache.dataset.duree))}`;
           zoneTemps.appendChild(barre);
 
           const finTard = Number(tache.dataset.finTard);
@@ -4389,9 +4396,14 @@
 
       if (nombreTraite !== taches.length) throw new Error("Cycle dans le projet");
 
-      const unite = typeof donnees.unite === "string" && donnees.unite.trim()
-        ? donnees.unite.trim().slice(0, 8)
-        : "Un.";
+      const uniteBrute = typeof donnees.unite === "string"
+        ? donnees.unite.trim().toLocaleLowerCase("fr")
+        : "";
+      const unite = ["h", "hr", "heure", "heures"].includes(uniteBrute)
+        ? "h"
+        : ["sem", "semaine", "semaines"].includes(uniteBrute)
+          ? "sem"
+          : "j";
       const seuilBudgetMensuel = donnees.seuilBudgetMensuel === undefined
         ? 0
         : Number(donnees.seuilBudgetMensuel);

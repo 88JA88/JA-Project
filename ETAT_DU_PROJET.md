@@ -8,7 +8,7 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (4 549 lignes, 163 086 octets après l’ajout du calendrier officiel France métropolitaine).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (4 561 lignes, 163 827 octets après le remplacement de l’unité libre par un menu).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
@@ -37,6 +37,7 @@
 - Le calendrier officiel « France métropolitaine » est appliqué par défaut et peut être désactivé. La fenêtre affiche séparément, avec leur nom et leur date, les onze jours fériés officiels de chaque année couverte par le projet et les dates particulières ajoutées manuellement. Les fêtes mobiles sont calculées à partir de Pâques.
 - Le calendrier est enregistré dans le JSON ; les anciens JSON sans calendrier sont interprétés en jours ouvrés avec le calendrier officiel France métropolitaine.
 - Le même calendrier commande les calculs au plus tôt et au plus tard, les marges, les dépendances, la vérification des durées, le résumé global, la répartition mensuelle du budget, le diagnostic de charge et le Gantt. Les périodes non travaillées sont grisées dans le Gantt.
+- L’unité du projet est choisie dans un menu limité à Jour, Heure et Semaine. Une semaine représente 5 jours en mode ouvré et 7 jours en mode calendaire. Les anciens libellés équivalents sont normalisés lors de l’ouverture d’un JSON.
 
 ## État des données dans `planning.json`
 
@@ -148,6 +149,9 @@
 - Ajout local du calendrier de projet et remplacement des additions calendaires directes par un moteur de temps travaillé. Tests réussis : vendredi + 1 j = lundi ; jeudi + 5 j = jeudi suivant ; vendredi + 1 j avec lundi exclu = mardi ; calcul inverse au plus tard exact ; 1 semaine ouvrée = 5 j ; mode calendaire conservé ; durée fractionnaire de 1,5 j du vendredi au lundi midi ; ancien JSON sans calendrier normalisé en jours ouvrés ; calendrier JSON sauvegardé et dates exclues dédoublonnées.
 - Test ciblé du réseau PERT réussi avec deux activités liées : exclusion du week-end, décalage d’un lundi non travaillé, dépendance respectée, dates au plus tard cohérentes et chemin critique inchangé. Syntaxe JavaScript, structure de la fenêtre Calendrier et contrôle des différences réussis. Cette évolution n’est pas encore publiée.
 - Ajout local du calendrier officiel France métropolitaine, vérifié d’après la liste officielle de Service-Public.fr. Test 2026 réussi : onze jours fériés, lundi de Pâques le 6 avril, Ascension le 14 mai, lundi de Pentecôte le 25 mai et fête nationale le 14 juillet ; un jour d’activité débutant le vendredi 3 avril finit le mardi 7 avril. La désactivation du calendrier officiel et sa persistance JSON sont également testées. Cette évolution n’est pas encore publiée.
+- Correction locale de l’enregistrement d’une affectation : lorsque celle-ci est sélectionnée dans la fiche d’activité, le bouton général « Enregistrer » applique automatiquement la ressource et la durée actuellement saisies. Test réussi avec passage de 2 à 3 unités et refus d’une durée supérieure à celle de l’activité. Le bouton redondant « Modifier » a ensuite été supprimé avec toutes ses références d’interface, sans retirer l’enregistrement automatique. Cette correction n’est pas encore publiée.
+- Ajout local de l’unité après la durée inscrite dans chaque barre du Gantt, avec singulier et pluriel. Les premiers tests couvraient également les unités libres avant leur remplacement par le menu limité décrit ci-dessous. Cette correction n’est pas encore publiée.
+- Remplacement local de la saisie libre « Unité » par un menu proposant uniquement Jour, Heure et Semaine ; l’unité Mois a été écartée. Le mode d’emploi est actualisé et le test confirme les trois seules options, leur branchement au recalcul et la normalisation des anciens JSON. Cette correction n’est pas encore publiée.
 
 ## Prochaine étape proposée
 
