@@ -81,11 +81,24 @@
       white-space: nowrap;
     }
 
-    #resume-ressources {
+    .resume-projet {
+      display: flex;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      column-gap: 36px;
+      row-gap: 4px;
+    }
+
+    #resume-ressources,
+    #resume-projet-global {
       margin: 0;
       color: #4d5964;
       font-size: 12px;
       line-height: 1.3;
+    }
+
+    #resume-ressources {
+      min-width: 260px;
     }
 
     .resume-ressource {
@@ -311,7 +324,7 @@
 
     .date-fin {
       left: 0;
-      width: 360px;
+      width: 250px;
       bottom: 0;
     }
 
@@ -341,8 +354,13 @@
     }
 
     .date-fin .ligne-date {
-      justify-content: flex-start;
-      gap: 12px;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .date-fin .fin-tard {
+      width: 82px;
+      text-align: right;
     }
 
     .cout-total-exterieur {
@@ -923,7 +941,10 @@
         <input id="fichier-projet" type="file" accept="application/json,.json" hidden>
       </div>
       <p class="aide">Double-cliquez dans le vide pour créer une activité. Sur une activité : clic gauche pour la sélectionner, double-clic gauche pour la modifier, clic droit pour renseigner ses détails. Sur iPad : appui long.</p>
-      <p id="resume-ressources">Ressources utilisées : aucune</p>
+      <div class="resume-projet">
+        <p id="resume-ressources"><strong>Ressources utilisées :</strong> aucune</p>
+        <p id="resume-projet-global"><strong>Durée totale :</strong> non calculable — <strong>Coût total :</strong> 0,00 €</p>
+      </div>
       <button id="afficher-tableau-affectations" type="button">Tableau des affectations</button>
     </div>
   </header>
@@ -1223,6 +1244,7 @@
     const boutonSupprimerRessource = document.querySelector("#supprimer-ressource");
     const boutonFermerRessources = document.querySelector("#fermer-ressources");
     const resumeRessources = document.querySelector("#resume-ressources");
+    const resumeProjetGlobal = document.querySelector("#resume-projet-global");
     const boutonAfficherTableauAffectations = document.querySelector("#afficher-tableau-affectations");
     const dialogueAffectations = document.querySelector("#dialogue-affectations");
     const corpsTableauAffectations = document.querySelector("#corps-tableau-affectations");
@@ -1857,8 +1879,8 @@
         </div>
         <div class="date-exterieure date-fin">
           <div class="ligne-date">
-            <input class="fin-tard" type="date" aria-label="Fin au plus tard" readonly tabindex="-1">
             <span class="cout-total-exterieur">Coût total : 0,00 €</span>
+            <input class="fin-tard" type="date" aria-label="Fin au plus tard" readonly tabindex="-1">
           </div>
         </div>
       `;
@@ -2977,18 +2999,61 @@
           `${ressource.nom} — ${ressource.discipline} : ${formatDuree(dureesTotales.get(ressource.id))} (${unite})`
         ));
 
+      actualiserResumeProjetGlobal();
+
+      const titre = document.createElement("strong");
+      titre.textContent = "Ressources utilisées :";
+
       if (!ressourcesUtilisees.length) {
-        resumeRessources.textContent = "Ressources utilisées : aucune";
+        resumeRessources.replaceChildren(titre, " aucune");
         return;
       }
 
-      resumeRessources.replaceChildren("Ressources utilisées :");
+      resumeRessources.replaceChildren(titre);
       ressourcesUtilisees.forEach((texte) => {
         const ligne = document.createElement("span");
         ligne.className = "resume-ressource";
         ligne.textContent = texte;
         resumeRessources.appendChild(ligne);
       });
+    }
+
+    function actualiserResumeProjetGlobal() {
+      const taches = [...zoneTravail.querySelectorAll(".tache")];
+      const coutTotal = taches.reduce(
+        (total, tache) => total + calculerCoutTotalTache(tache),
+        0
+      );
+      const datesCompletes = taches.length > 0 && taches.every((tache) => (
+        tache.dataset.debutTot
+        && tache.dataset.finTot
+        && Number.isFinite(Number(tache.dataset.debutTot))
+        && Number.isFinite(Number(tache.dataset.finTot))
+      ));
+      const titreDuree = document.createElement("strong");
+      const titreCout = document.createElement("strong");
+      titreDuree.textContent = "Durée totale :";
+      titreCout.textContent = "Coût total :";
+      let dureeEtDates = " non calculable";
+
+      if (datesCompletes) {
+        const debut = Math.min(...taches.map((tache) => Number(tache.dataset.debutTot)));
+        const fin = Math.max(...taches.map((tache) => Number(tache.dataset.finTot)));
+        const duree = Math.round(
+          ((fin - debut) / convertirDureeEnMillisecondes(1)) * 100
+        ) / 100;
+        const unite = champUnite.value.trim() || "Un.";
+        const formatDate = new Intl.DateTimeFormat("fr-FR");
+        dureeEtDates = ` ${formatDuree(duree)} ${unite} du ${formatDate.format(new Date(debut))} au ${formatDate.format(new Date(fin))}`;
+      }
+
+      resumeProjetGlobal.replaceChildren(
+        titreDuree,
+        dureeEtDates,
+        " — ",
+        titreCout,
+        ` ${formaterMontantEuro(coutTotal)}`
+      );
     }
 
     function ouvrirTableauAffectations() {
