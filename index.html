@@ -71,6 +71,16 @@
       font-size: 16px;
     }
 
+    #nom-fichier-actif {
+      max-width: 320px;
+      overflow: hidden;
+      color: #36414b;
+      font-size: 14px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     #resume-ressources {
       margin: 0;
       color: #4d5964;
@@ -893,6 +903,7 @@
       <div class="ligne-commandes">
         <h1>Réseau PERT</h1>
         <span class="separateur-titre" aria-hidden="true">—</span>
+        <span id="nom-fichier-actif">Aucun fichier</span>
         <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
         <button id="nouveau-projet" class="bouton-barre" type="button">Nouveau projet</button>
         <button id="gerer-ressources" class="bouton-barre" type="button">Ressources</button>
@@ -1110,6 +1121,7 @@
         <ul>
           <li>Au démarrage, le dernier projet personnel mémorisé est repris ; sinon le planning reste vide.</li>
           <li><strong>Ouvrir</strong> permet de choisir un fichier JSON personnel.</li>
+          <li><strong>Enregistrer</strong> demande une destination lorsque le navigateur le permet, puis réutilise ce fichier. Sinon, il annonce le nom de la copie téléchargée.</li>
           <li><strong>Nouveau projet</strong> efface le planning affiché après confirmation.</li>
         </ul>
 
@@ -1180,6 +1192,7 @@
     const boutonNouveauProjet = document.querySelector("#nouveau-projet");
     const boutonEnregistrerProjet = document.querySelector("#enregistrer-projet");
     const boutonOuvrirProjet = document.querySelector("#ouvrir-projet");
+    const nomFichierActif = document.querySelector("#nom-fichier-actif");
     const boutonLierFichierTravail = document.querySelector("#lier-fichier-travail");
     const boutonVerifierProjet = document.querySelector("#verifier-projet");
     const boutonBudgetMensuel = document.querySelector("#budget-mensuel");
@@ -1239,6 +1252,7 @@
       ? "planning-reseau-sauvegarde-automatique-v4"
       : "planning-reseau-sauvegarde-automatique-v2";
     const CLE_CATALOGUE_RESSOURCES = "planning-reseau-catalogue-ressources-v2";
+    const CLE_NOM_FICHIER_ACTIF = "planning-reseau-nom-fichier-actif-v1";
     const MESSAGE_DUREE_RESSOURCE = "La durée d’une ressource ne peut pas dépasser celle de l’activité. Augmentez la durée de l’activité ou modifiez l’affectation des ressources.";
     let positionCreation = { x: 0, y: 0 };
     let prochainIdentifiant = 1;
@@ -2722,16 +2736,66 @@
       });
     }
 
-    function enregistrerProjet() {
+    async function enregistrerProjet() {
       const contenu = JSON.stringify(construireProjet(), null, 2);
+      const nomSauvegarde = creerNomSauvegarde();
+
+      if (typeof window.showSaveFilePicker === "function") {
+        try {
+          if (!fichierTravailLie) {
+            fichierTravailLie = await window.showSaveFilePicker({
+              suggestedName: nomSauvegarde,
+              types: [{
+                description: "Projet de planning JSON",
+                accept: { "application/json": [".json"] }
+              }]
+            });
+          }
+
+          ouvertureProjetEnCours = true;
+          sauvegarderProjetLocal();
+          ouvertureProjetEnCours = false;
+          await ecrireFichierTravailLie();
+          boutonLierFichierTravail.title = `Fichier lié : ${fichierTravailLie.name}`;
+          definirNomFichierActif(fichierTravailLie.name);
+          window.alert(`Projet enregistré dans « ${fichierTravailLie.name} ».`);
+          return;
+        } catch (erreur) {
+          ouvertureProjetEnCours = false;
+          if (erreur?.name === "AbortError") return;
+          fichierTravailLie = null;
+          boutonLierFichierTravail.removeAttribute("title");
+          window.alert("L’enregistrement direct a échoué. Une copie va être téléchargée.");
+        }
+      } else {
+        const continuer = window.confirm(
+          `Ce navigateur ne peut pas choisir directement un dossier. La sauvegarde « ${nomSauvegarde} » va être téléchargée. Vérifiez le dossier de téléchargement configuré dans le navigateur. Continuer ?`
+        );
+        if (!continuer) return;
+      }
+
+      sauvegarderProjetLocal();
+      telechargerSauvegarde(contenu, nomSauvegarde);
+      definirNomFichierActif(nomSauvegarde);
+    }
+
+    function creerNomSauvegarde() {
+      const maintenant = new Date();
+      const deuxChiffres = (valeur) => String(valeur).padStart(2, "0");
+      const horodatage = [
+        deuxChiffres(maintenant.getDate()),
+        deuxChiffres(maintenant.getMonth() + 1),
+        `${deuxChiffres(maintenant.getHours())}h${deuxChiffres(maintenant.getMinutes())}`
+      ].join("-");
+      return `planning-${horodatage}.json`;
+    }
+
+    function telechargerSauvegarde(contenu, nomSauvegarde) {
       const objetFichier = new Blob([contenu], { type: "application/json" });
       const adresse = URL.createObjectURL(objetFichier);
       const lien = document.createElement("a");
-      const dateDuJour = new Date().toISOString().slice(0, 10);
-
-      sauvegarderProjetLocal();
       lien.href = adresse;
-      lien.download = `planning-${dateDuJour}.json`;
+      lien.download = nomSauvegarde;
       document.body.appendChild(lien);
       lien.click();
       lien.remove();
@@ -2777,6 +2841,7 @@
       champUnite.value = "j";
       viderProjet();
       ouvertureProjetEnCours = false;
+      definirNomFichierActif(nouveauFichier ? nouveauFichier.name : "Nouveau projet");
       sauvegarderProjetLocal();
 
       if (!nouveauFichier) {
@@ -2862,6 +2927,7 @@
         afficherProjet(projet);
         ouvertureProjetEnCours = false;
         boutonLierFichierTravail.title = `Fichier lié : ${fichier.name}`;
+        definirNomFichierActif(fichier.name);
         await ecrireFichierTravailLie();
       } catch (erreur) {
         ouvertureProjetEnCours = false;
@@ -3217,7 +3283,11 @@
         }
 
         chargementInitialActif = false;
+        await ecritureFichierTravail.catch(() => {});
+        fichierTravailLie = null;
+        boutonLierFichierTravail.removeAttribute("title");
         afficherProjet(projet);
+        definirNomFichierActif(fichier.name);
       } catch (erreur) {
         window.alert("Ce fichier ne contient pas un projet de planning valide.");
       } finally {
@@ -3265,6 +3335,7 @@
         if (sauvegardeLocale) {
           const projetLocal = normaliserProjet(JSON.parse(sauvegardeLocale));
           chargementInitialActif = false;
+          definirNomFichierActif(lireNomFichierActifLocal() || "Projet récupéré");
           afficherProjet(projetLocal);
           return;
         }
@@ -3275,6 +3346,26 @@
       chargementInitialActif = false;
       actualiserUnite();
       actualiserResumeRessources();
+    }
+
+    function definirNomFichierActif(nom) {
+      const valeur = typeof nom === "string" && nom.trim() ? nom.trim() : "Aucun fichier";
+      nomFichierActif.textContent = valeur;
+      nomFichierActif.title = valeur;
+      try {
+        if (valeur === "Aucun fichier") localStorage.removeItem(CLE_NOM_FICHIER_ACTIF);
+        else localStorage.setItem(CLE_NOM_FICHIER_ACTIF, valeur);
+      } catch (erreur) {
+        // Le nom reste affiché si le navigateur refuse le stockage local.
+      }
+    }
+
+    function lireNomFichierActifLocal() {
+      try {
+        return localStorage.getItem(CLE_NOM_FICHIER_ACTIF) || "";
+      } catch (erreur) {
+        return "";
+      }
     }
 
     function normaliserProjet(donnees) {

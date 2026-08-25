@@ -8,7 +8,7 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 501 lignes, 122 048 octets après la suppression complète de la démonstration).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 592 lignes, 125 771 octets après l’affichage du nom du fichier actif).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
@@ -28,6 +28,7 @@
 - Mode d’emploi succinct accessible dans une fenêtre par un bouton placé à côté d’« Imprimer ».
 - Sur écran tactile, la date de début est resserrée contre le calendrier et séparée de la liste des ressources.
 - Au démarrage, l’application reprend uniquement le dernier projet personnel mémorisé ; en l’absence de sauvegarde, le planning reste vide. Aucun projet de démonstration n’est inclus ni chargé.
+- Le nom du fichier actif est affiché après « Réseau PERT — », actualisé après ouverture, liaison, création ou enregistrement, puis mémorisé pour la reprise automatique. Les noms longs sont tronqués visuellement sans perdre leur intitulé complet dans l’infobulle.
 
 ## État des données dans `planning.json`
 
@@ -124,6 +125,9 @@
 - Correction validée dans `index.html` du conflit de chargement sur GitHub Pages : un JSON personnel ouvert pendant l’attente de `planning.json` ne peut plus être remplacé ensuite par la démonstration. Le même garde-fou s’applique à « Lier le fichier de travail » et « Nouveau projet ». Contrôle de syntaxe réussi et test asynchrone ciblé réussi avec retour 404 simulé. `planning.json` n’a pas été modifié.
 - Suppression validée de tout chargement automatique de la démonstration. Ajout du bouton « Démo » et du fichier indépendant `planning-demo.json`, réactualisable séparément. Le projet personnel mémorisé est repris au démarrage ; sinon le planning reste vide. La consultation de la démonstration préserve la sauvegarde personnelle existante. Syntaxe JavaScript et JSON contrôlée.
 - Suppression complète validée de la solution de démonstration : retrait du bouton et du code, suppression de `planning-demo.json` et neutralisation de toute copie antérieure mémorisée sur GitHub Pages. Le démarrage est désormais strictement limité à un projet personnel mémorisé ou à un planning vide.
+- Modification validée du nom produit par « Enregistrer » : format `planning-JJ-MM-HHhMM.json`, sans année et selon l’heure locale de l’ordinateur. Contrôle réussi avec `planning-24-08-18h42.json`.
+- Amélioration validée de « Enregistrer » : les navigateurs compatibles demandent le fichier de destination lors du premier enregistrement et le réutilisent ensuite pendant la session ; les autres affichent un avertissement indiquant le nom exact de la copie et le rôle du dossier de téléchargement avant de poursuivre. Les deux parcours ont été testés avec succès.
+- Ajout validé du nom du fichier actif à côté de « Réseau PERT — ». Le nom est actualisé et mémorisé pour « Ouvrir », « Lier le fichier de travail », « Nouveau projet », « Enregistrer » et la reprise automatique. Tests réussis d’affichage, de mémorisation et de restauration. Publication GitHub autorisée le 25 août 2026.
 
 ## Prochaine étape proposée
 
