@@ -113,7 +113,8 @@
     }
 
     #afficher-tableau-affectations,
-    #afficher-tableau-activites {
+    #afficher-tableau-activites,
+    #afficher-gantt {
       align-self: flex-start;
       height: 30px;
       margin-top: 3px;
@@ -528,6 +529,10 @@
       width: min(1280px, calc(100vw - 32px));
     }
 
+    #dialogue-gantt {
+      width: min(1400px, calc(100vw - 24px));
+    }
+
     #dialogue-budget {
       width: min(760px, calc(100vw - 32px));
     }
@@ -694,6 +699,160 @@
 
     #tableau-activites .valeur-date {
       white-space: nowrap;
+    }
+
+    #tableau-activites .nom-activite-critique {
+      font-weight: 700;
+    }
+
+    .legende-gantt {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin: 0 0 10px;
+      color: #4d5964;
+      font-size: 12px;
+    }
+
+    .legende-gantt span::before {
+      display: inline-block;
+      width: 18px;
+      height: 9px;
+      margin-right: 5px;
+      border-radius: 3px;
+      background: #3275c7;
+      content: "";
+    }
+
+    .legende-gantt .legende-critique::before {
+      background: #b42318;
+    }
+
+    .legende-gantt .legende-marge::before {
+      box-sizing: border-box;
+      border: 1px solid #8e99a3;
+      background: #fff;
+    }
+
+    .legende-gantt .unite-temps-gantt::before {
+      display: none;
+    }
+
+    .conteneur-gantt {
+      max-height: min(66vh, 620px);
+      overflow: auto;
+      border: 1px solid #c7ccd1;
+      border-radius: 7px;
+      background: #fff;
+      overscroll-behavior: contain;
+    }
+
+    #gantt {
+      --largeur-libelle-gantt: 250px;
+      --largeur-temps-gantt: 700px;
+      --pas-grille-gantt: 100px;
+      width: calc(var(--largeur-libelle-gantt) + var(--largeur-temps-gantt));
+      min-width: 100%;
+      color: #1d2933;
+      font-size: 12px;
+    }
+
+    .ligne-gantt {
+      display: grid;
+      grid-template-columns: var(--largeur-libelle-gantt) var(--largeur-temps-gantt);
+      min-height: 28px;
+      border-bottom: 1px solid #dfe3e6;
+    }
+
+    .ligne-gantt:last-child {
+      border-bottom: 0;
+    }
+
+    .entete-gantt {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      min-height: 46px;
+      background: #e9edf1;
+      font-weight: 700;
+    }
+
+    .libelle-gantt {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-right: 1px solid #c7ccd1;
+      background: #fff;
+    }
+
+    .entete-gantt .libelle-gantt {
+      z-index: 5;
+      background: #e9edf1;
+    }
+
+    .libelle-gantt.critique {
+      font-weight: 750;
+    }
+
+    .echelle-gantt,
+    .zone-temps-gantt {
+      position: relative;
+      min-width: 0;
+      background-image: linear-gradient(to right, #9da8b2 1px, transparent 1px);
+      background-size: var(--pas-grille-gantt) 100%;
+    }
+
+    .graduation-gantt {
+      position: absolute;
+      top: 7px;
+      padding-left: 5px;
+      color: #35414c;
+      white-space: nowrap;
+    }
+
+    .barre-gantt {
+      position: absolute;
+      top: 2px;
+      min-width: 3px;
+      height: 23px;
+      overflow: hidden;
+      border-radius: 4px;
+      background: #3275c7;
+      box-shadow: inset 0 0 0 1px rgb(0 0 0 / 12%);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 23px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .barre-gantt.critique {
+      background: #b42318;
+    }
+
+    .marge-gantt {
+      position: absolute;
+      top: 2px;
+      box-sizing: border-box;
+      min-width: 1px;
+      height: 23px;
+      border: 1px solid #8e99a3;
+      border-left: 0;
+      border-radius: 0 4px 4px 0;
+      background: #fff;
+    }
+
+    .dates-indisponibles-gantt {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      padding-left: 10px;
+      color: #7a4d00;
+      font-style: italic;
     }
 
     #tableau-affectations .total-ressource td {
@@ -976,6 +1135,7 @@
       <div class="boutons-tableaux">
         <button id="afficher-tableau-affectations" type="button">Tableau des affectations</button>
         <button id="afficher-tableau-activites" type="button">Tableau des activités</button>
+        <button id="afficher-gantt" type="button">Diagramme de Gantt</button>
       </div>
     </div>
   </header>
@@ -1157,6 +1317,25 @@
     </form>
   </dialog>
 
+  <dialog id="dialogue-gantt">
+    <form method="dialog">
+      <h2>Diagramme de Gantt</h2>
+      <p class="legende-gantt">
+        <span>Activité</span>
+        <span class="legende-critique">Chemin critique</span>
+        <span class="legende-marge">Marge totale</span>
+        <span id="unite-temps-gantt" class="unite-temps-gantt">Unité de temps : —</span>
+      </p>
+      <div class="conteneur-gantt">
+        <div id="gantt"></div>
+      </div>
+
+      <div class="actions">
+        <button type="submit">Fermer</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="dialogue-budget">
     <form id="formulaire-budget">
       <h2>Contrôle du budget mensuel</h2>
@@ -1238,6 +1417,7 @@
           <li><strong>Vérifier le projet</strong> affiche les erreurs et les besoins estimés en personnel.</li>
           <li><strong>Tableau des affectations</strong> récapitule les charges et les coûts.</li>
           <li><strong>Tableau des activités</strong> récapitule les dates, les marges et les dépendances du graphe.</li>
+          <li><strong>Diagramme de Gantt</strong> affiche le projet sur une échelle de temps, sans permettre de le modifier.</li>
           <li><strong>Budget mensuel</strong> compare les coûts prévus au seuil saisi.</li>
         </ul>
 
@@ -1312,6 +1492,10 @@
     const boutonAfficherTableauActivites = document.querySelector("#afficher-tableau-activites");
     const dialogueActivites = document.querySelector("#dialogue-activites");
     const corpsTableauActivites = document.querySelector("#corps-tableau-activites");
+    const boutonAfficherGantt = document.querySelector("#afficher-gantt");
+    const dialogueGantt = document.querySelector("#dialogue-gantt");
+    const gantt = document.querySelector("#gantt");
+    const uniteTempsGantt = document.querySelector("#unite-temps-gantt");
     const dialogueBudget = document.querySelector("#dialogue-budget");
     const formulaireBudget = document.querySelector("#formulaire-budget");
     const champSeuilBudgetMensuel = document.querySelector("#seuil-budget-mensuel");
@@ -1433,6 +1617,10 @@
     boutonAfficherTableauActivites.addEventListener("click", ouvrirTableauActivites);
     dialogueActivites.addEventListener("click", (evenement) => {
       if (evenement.target === dialogueActivites) dialogueActivites.close();
+    });
+    boutonAfficherGantt.addEventListener("click", ouvrirDiagrammeGantt);
+    dialogueGantt.addEventListener("click", (evenement) => {
+      if (evenement.target === dialogueGantt) dialogueGantt.close();
     });
     formulaireBudget.addEventListener("submit", (evenement) => {
       evenement.preventDefault();
@@ -3245,7 +3433,11 @@
           ? formaterMarge(margeEnMillisecondes)
           : "—";
 
-        ajouterCelluleTableau(ligne, tache.dataset.nom);
+        ajouterCelluleTableau(
+          ligne,
+          tache.dataset.nom,
+          estTacheCritique(tache) ? "nom-activite-critique" : ""
+        );
         ajouterCelluleTableau(ligne, `${formatDuree(Number(tache.dataset.duree))} (${unite})`, "valeur-numerique");
         ajouterCelluleTableau(ligne, predecesseurs.join(" ; ") || "—");
         ajouterCelluleTableau(ligne, successeurs.join(" ; ") || "—");
@@ -3265,6 +3457,141 @@
       }
 
       dialogueActivites.showModal();
+    }
+
+    function ouvrirDiagrammeGantt() {
+      recalculerPlanning();
+      gantt.replaceChildren();
+
+      const taches = [...zoneTravail.querySelectorAll(".tache")]
+        .sort((a, b) => {
+          const debutA = a.dataset.debutTot ? Number(a.dataset.debutTot) : Number.POSITIVE_INFINITY;
+          const debutB = b.dataset.debutTot ? Number(b.dataset.debutTot) : Number.POSITIVE_INFINITY;
+          if (debutA !== debutB) return debutA - debutB;
+          return String(a.dataset.nom).localeCompare(String(b.dataset.nom), "fr", { sensitivity: "base" });
+        });
+      const tachesDatees = taches.filter((tache) => (
+        tache.dataset.debutTot
+        && tache.dataset.finTot
+        && Number.isFinite(Number(tache.dataset.debutTot))
+        && Number.isFinite(Number(tache.dataset.finTot))
+      ));
+
+      if (!taches.length) {
+        const ligneVide = document.createElement("div");
+        ligneVide.className = "aucune-affectation";
+        ligneVide.textContent = "Aucune activité dans le projet.";
+        gantt.appendChild(ligneVide);
+        dialogueGantt.showModal();
+        return;
+      }
+
+      const millisecondesParUnite = convertirDureeEnMillisecondes(1);
+      const debutProjet = tachesDatees.length
+        ? Math.min(...tachesDatees.map((tache) => Number(tache.dataset.debutTot)))
+        : 0;
+      const finProjet = tachesDatees.length
+        ? Math.max(...tachesDatees.map((tache) => Number(tache.dataset.finTot)))
+        : debutProjet + millisecondesParUnite;
+      const etendueEnUnites = Math.max(1, (finProjet - debutProjet) / millisecondesParUnite);
+      const pixelsParUnite = etendueEnUnites <= 20
+        ? 34
+        : etendueEnUnites <= 60
+          ? 20
+          : etendueEnUnites <= 180
+            ? 10
+            : 6;
+      const largeurTemps = Math.max(700, Math.ceil(etendueEnUnites * pixelsParUnite));
+      const pasPossibles = [1, 2, 5, 7, 10, 14, 30, 60, 90, 180, 365];
+      const pasGraduation = pasPossibles.find((pas) => pas * pixelsParUnite >= 82)
+        || Math.ceil(82 / pixelsParUnite / 365) * 365;
+      const largeurPas = pasGraduation * pixelsParUnite;
+      const uniteEnMinuscules = (champUnite.value.trim() || "Un.").toLocaleLowerCase("fr");
+      const formatDate = new Intl.DateTimeFormat("fr-FR", millisecondesParUnite < MILLISECONDES_PAR_JOUR
+        ? { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }
+        : { day: "2-digit", month: "2-digit", year: "numeric" });
+
+      gantt.style.setProperty("--largeur-temps-gantt", `${largeurTemps}px`);
+      gantt.style.setProperty("--pas-grille-gantt", `${largeurPas}px`);
+      uniteTempsGantt.textContent = `Unité de temps : ${champUnite.value.trim() || "Un."}`;
+
+      const entete = document.createElement("div");
+      entete.className = "ligne-gantt entete-gantt";
+      const libelleEntete = document.createElement("div");
+      libelleEntete.className = "libelle-gantt";
+      libelleEntete.textContent = "Activités";
+      const echelle = document.createElement("div");
+      echelle.className = "echelle-gantt";
+
+      if (tachesDatees.length) {
+        for (let position = 0; position <= etendueEnUnites; position += pasGraduation) {
+          const graduation = document.createElement("span");
+          graduation.className = "graduation-gantt";
+          graduation.style.left = `${position * pixelsParUnite}px`;
+          graduation.textContent = formatDate.format(
+            new Date(debutProjet + position * millisecondesParUnite)
+          );
+          echelle.appendChild(graduation);
+        }
+      } else {
+        const graduation = document.createElement("span");
+        graduation.className = "graduation-gantt";
+        graduation.textContent = "Dates non calculables";
+        echelle.appendChild(graduation);
+      }
+      entete.append(libelleEntete, echelle);
+      gantt.appendChild(entete);
+
+      taches.forEach((tache) => {
+        const critique = estTacheCritique(tache);
+        const ligne = document.createElement("div");
+        ligne.className = "ligne-gantt";
+        const libelle = document.createElement("div");
+        libelle.className = `libelle-gantt${critique ? " critique" : ""}`;
+        libelle.textContent = tache.dataset.nom;
+        libelle.title = tache.dataset.nom;
+        const zoneTemps = document.createElement("div");
+        zoneTemps.className = "zone-temps-gantt";
+
+        const debut = Number(tache.dataset.debutTot);
+        const fin = Number(tache.dataset.finTot);
+        if (tache.dataset.debutTot && tache.dataset.finTot && Number.isFinite(debut) && Number.isFinite(fin)) {
+          const barre = document.createElement("div");
+          barre.className = `barre-gantt${critique ? " critique" : ""}`;
+          barre.style.left = `${((debut - debutProjet) / millisecondesParUnite) * pixelsParUnite}px`;
+          barre.style.width = `${Math.max(3, ((fin - debut) / millisecondesParUnite) * pixelsParUnite)}px`;
+          barre.textContent = formatDuree(Number(tache.dataset.duree));
+          barre.title = `${tache.dataset.nom} — du ${formatDate.format(new Date(debut))} au ${formatDate.format(new Date(fin))} — ${formatDuree(Number(tache.dataset.duree))} ${uniteEnMinuscules}`;
+          zoneTemps.appendChild(barre);
+
+          const finTard = Number(tache.dataset.finTard);
+          const margeEnMillisecondes = Number(tache.dataset.margeTotale);
+          if (
+            tache.dataset.finTard
+            && tache.dataset.margeTotale
+            && Number.isFinite(finTard)
+            && Number.isFinite(margeEnMillisecondes)
+            && margeEnMillisecondes > 0
+          ) {
+            const marge = document.createElement("div");
+            marge.className = "marge-gantt";
+            marge.style.left = `${((fin - debutProjet) / millisecondesParUnite) * pixelsParUnite}px`;
+            marge.style.width = `${Math.max(1, (margeEnMillisecondes / millisecondesParUnite) * pixelsParUnite)}px`;
+            marge.title = `Marge totale : ${formaterMarge(margeEnMillisecondes)}`;
+            zoneTemps.appendChild(marge);
+          }
+        } else {
+          const indication = document.createElement("span");
+          indication.className = "dates-indisponibles-gantt";
+          indication.textContent = "Dates non calculables";
+          zoneTemps.appendChild(indication);
+        }
+
+        ligne.append(libelle, zoneTemps);
+        gantt.appendChild(ligne);
+      });
+
+      dialogueGantt.showModal();
     }
 
     function ouvrirControleBudget() {

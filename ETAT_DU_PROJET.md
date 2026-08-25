@@ -8,7 +8,7 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 780 lignes, 133 233 octets après l’ajout du tableau des activités).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (4 107 lignes, 144 407 octets après l’ajout visuel de la marge totale dans le Gantt).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
@@ -31,7 +31,8 @@
 - Le nom du fichier actif est affiché après « Réseau PERT — », actualisé après ouverture, liaison, création ou enregistrement, puis mémorisé pour la reprise automatique. Les noms longs sont tronqués visuellement sans perdre leur intitulé complet dans l’infobulle.
 - À droite des ressources utilisées, un résumé affiche la durée réelle du projet entre sa première date de début et sa dernière date de fin, ainsi que le coût total des affectations. Les intitulés sont en gras et le résumé passe sous les ressources lorsque la largeur disponible est insuffisante.
 - Sous chaque activité, le coût total est placé à gauche et la date de fin est alignée à droite afin de la distinguer clairement de la date de début affichée au-dessus.
-- Un bouton « Tableau des activités », placé à côté du tableau des affectations, ouvre un récapitulatif consultatif recalculé à chaque ouverture : activité, durée, prédécesseurs, successeurs, dates au plus tôt, marge totale, fin au plus tard et coût total. Les dépendances sont indiquées par leurs noms et le tableau défile horizontalement sur écran étroit.
+- Un bouton « Tableau des activités », placé à côté du tableau des affectations, ouvre un récapitulatif consultatif recalculé à chaque ouverture : activité, durée, prédécesseurs, successeurs, dates au plus tôt, marge totale, fin au plus tard et coût total. Les dépendances sont indiquées par leurs noms, le nom des activités du chemin critique est en gras et le tableau défile horizontalement sur écran étroit.
+- Un bouton « Diagramme de Gantt » ouvre une visualisation consultative reconstruite à partir des dates du PERT : une ligne resserrée et une barre par activité, unité de temps affichée, échelle temporelle automatique dont chaque ligne verticale fine et contrastée correspond à la date indiquée, chemin critique en rouge et en gras, marge totale prolongée par une zone blanche bordée, libellés maintenus à gauche pendant le défilement horizontal et signalement des activités sans dates calculables. Le Gantt ne permet aucune modification du projet.
 
 ## État des données dans `planning.json`
 
@@ -133,14 +134,20 @@
 - Ajout validé du nom du fichier actif à côté de « Réseau PERT — ». Le nom est actualisé et mémorisé pour « Ouvrir », « Lier le fichier de travail », « Nouveau projet », « Enregistrer » et la reprise automatique. Tests réussis d’affichage, de mémorisation et de restauration. Publication GitHub autorisée le 25 août 2026.
 - Ajout validé du résumé global à droite de « Ressources utilisées » : durée totale entre la première date de début et la dernière date de fin, dates au format français et coût total des affectations. Les titres « Ressources utilisées », « Durée totale » et « Coût total » sont en gras ; la disposition revient à la ligne sur écran étroit. Tests réussis pour un projet daté, des dates incomplètes et le total des coûts.
 - Inversion validée sous chaque activité : coût total à gauche, date de fin à droite, avec largeur resserrée et alignement explicite de la date. Le contrôle de structure et de syntaxe est réussi. Publication GitHub autorisée le 25 août 2026.
-- Ajout local du tableau consultatif des activités et de leurs dépendances, avec neuf colonnes et défilement horizontal sur écran étroit. Le mode d’emploi est actualisé. Syntaxe JavaScript, structure HTML et test fonctionnel ciblé réussis : recalcul à l’ouverture, deux activités liées, noms du prédécesseur et du successeur, dates, marges, coûts et neuf cellules par ligne. Cette étape n’est pas encore publiée.
+- Ajout validé et publié du tableau consultatif des activités et de leurs dépendances, avec neuf colonnes et défilement horizontal sur écran étroit. Le mode d’emploi est actualisé. Syntaxe JavaScript, structure HTML et test fonctionnel ciblé réussis : recalcul à l’ouverture, deux activités liées, noms du prédécesseur et du successeur, dates, marges, coûts et neuf cellules par ligne. Publication GitHub effectuée le 25 août 2026 dans le commit `fbcac32`.
+- Mise en gras validée localement du nom des activités du chemin critique dans le tableau des activités. Le test ciblé confirme qu’une activité critique est marquée et qu’une activité non critique reste en caractères normaux. Cette seule retouche n’est pas encore publiée.
+- Le 25 août 2026, l’utilisateur considère ce stade de l’application comme opérationnel.
+- Ajout local d’une première visualisation Gantt strictement consultative. Le test ciblé confirme l’ouverture, le tri, la position et la largeur des barres, la distinction entre activité critique et ordinaire et le traitement d’une activité sans dates. La syntaxe JavaScript et la structure passent les contrôles ; cette version d’essai n’est pas encore publiée.
+- Ajustement local validé techniquement du Gantt : lignes ramenées à 28 px pour rapprocher les barres, affichage explicite de l’unité de temps et ligne verticale fine à chaque passage du dimanche au lundi. Le test sur une période de seize jours confirme deux séparateurs hebdomadaires cohérents. Ces ajustements ne sont pas encore publiés.
+- Retrait local des séparateurs hebdomadaires, jugés ambigus : les seules lignes verticales restantes correspondent désormais exactement aux dates de l’échelle. Ajout d’un prolongement blanc bordé représentant la marge totale à droite de la barre colorée. Le test confirme l’alignement des graduations, une marge visuelle de 2 j sur une activité non critique et l’absence de prolongement pour une activité critique. Cette correction n’est pas encore publiée.
+- Renforcement local du contraste des lignes verticales datées après constat visuel de leur manque de visibilité. Leur épaisseur reste limitée à 1 px et leur alignement avec les dates demeure inchangé. Cette correction n’est pas encore publiée.
 
 ## Prochaine étape proposée
 
-- Faire valider visuellement le tableau des activités par l’utilisateur, puis le publier seulement après son accord explicite.
+- Faire contrôler visuellement la première version du Gantt par l’utilisateur, notamment la lisibilité et le défilement sur ordinateur et iPad, puis corriger un seul point à la fois avant toute publication.
 
 ## Reste à faire
 
-- Attendre la validation de l’utilisateur avant toute autre modification du programme ou publication.
+- Attendre l’accord de l’utilisateur avant toute nouvelle modification du programme ou publication.
 - Ne traiter ensuite qu’une seule modification à la fois.
 - Mettre à jour ce document après chaque modification validée.
