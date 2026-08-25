@@ -105,7 +105,15 @@
       display: block;
     }
 
-    #afficher-tableau-affectations {
+    .boutons-tableaux {
+      display: flex;
+      flex-wrap: wrap;
+      align-self: flex-start;
+      gap: 8px;
+    }
+
+    #afficher-tableau-affectations,
+    #afficher-tableau-activites {
       align-self: flex-start;
       height: 30px;
       margin-top: 3px;
@@ -516,6 +524,10 @@
       width: min(980px, calc(100vw - 32px));
     }
 
+    #dialogue-activites {
+      width: min(1280px, calc(100vw - 32px));
+    }
+
     #dialogue-budget {
       width: min(760px, calc(100vw - 32px));
     }
@@ -626,22 +638,30 @@
       font-size: 12px;
     }
 
-    .conteneur-tableau-affectations {
+    .conteneur-tableau-affectations,
+    .conteneur-tableau-activites {
       max-height: min(62vh, 560px);
       overflow: auto;
       border: 1px solid #c7ccd1;
       border-radius: 7px;
     }
 
-    #tableau-affectations {
+    #tableau-affectations,
+    #tableau-activites {
       width: 100%;
       border-collapse: collapse;
       color: #111;
       font-size: 12px;
     }
 
+    #tableau-activites {
+      min-width: 1180px;
+    }
+
     #tableau-affectations th,
-    #tableau-affectations td {
+    #tableau-affectations td,
+    #tableau-activites th,
+    #tableau-activites td {
       padding: 4px 8px;
       border-right: 1px solid #dfe3e6;
       border-bottom: 1px solid #dfe3e6;
@@ -651,11 +671,14 @@
     }
 
     #tableau-affectations th:last-child,
-    #tableau-affectations td:last-child {
+    #tableau-affectations td:last-child,
+    #tableau-activites th:last-child,
+    #tableau-activites td:last-child {
       border-right: 0;
     }
 
-    #tableau-affectations thead th {
+    #tableau-affectations thead th,
+    #tableau-activites thead th {
       position: sticky;
       top: 0;
       z-index: 1;
@@ -663,8 +686,13 @@
       white-space: nowrap;
     }
 
-    #tableau-affectations .valeur-numerique {
+    #tableau-affectations .valeur-numerique,
+    #tableau-activites .valeur-numerique {
       text-align: right;
+      white-space: nowrap;
+    }
+
+    #tableau-activites .valeur-date {
       white-space: nowrap;
     }
 
@@ -945,7 +973,10 @@
         <p id="resume-ressources"><strong>Ressources utilisées :</strong> aucune</p>
         <p id="resume-projet-global"><strong>Durée totale :</strong> non calculable — <strong>Coût total :</strong> 0,00 €</p>
       </div>
-      <button id="afficher-tableau-affectations" type="button">Tableau des affectations</button>
+      <div class="boutons-tableaux">
+        <button id="afficher-tableau-affectations" type="button">Tableau des affectations</button>
+        <button id="afficher-tableau-activites" type="button">Tableau des activités</button>
+      </div>
     </div>
   </header>
 
@@ -1098,6 +1129,34 @@
     </form>
   </dialog>
 
+  <dialog id="dialogue-activites">
+    <form method="dialog">
+      <h2>Tableau des activités</h2>
+      <div class="conteneur-tableau-activites">
+        <table id="tableau-activites">
+          <thead>
+            <tr>
+              <th scope="col">Activité</th>
+              <th scope="col" class="valeur-numerique">Durée</th>
+              <th scope="col">Prédécesseurs</th>
+              <th scope="col">Successeurs</th>
+              <th scope="col">Début au plus tôt</th>
+              <th scope="col">Fin au plus tôt</th>
+              <th scope="col" class="valeur-numerique">Marge totale</th>
+              <th scope="col">Fin au plus tard</th>
+              <th scope="col" class="valeur-numerique">Coût total</th>
+            </tr>
+          </thead>
+          <tbody id="corps-tableau-activites"></tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button type="submit">Fermer</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="dialogue-budget">
     <form id="formulaire-budget">
       <h2>Contrôle du budget mensuel</h2>
@@ -1178,6 +1237,7 @@
         <ul>
           <li><strong>Vérifier le projet</strong> affiche les erreurs et les besoins estimés en personnel.</li>
           <li><strong>Tableau des affectations</strong> récapitule les charges et les coûts.</li>
+          <li><strong>Tableau des activités</strong> récapitule les dates, les marges et les dépendances du graphe.</li>
           <li><strong>Budget mensuel</strong> compare les coûts prévus au seuil saisi.</li>
         </ul>
 
@@ -1249,6 +1309,9 @@
     const dialogueAffectations = document.querySelector("#dialogue-affectations");
     const corpsTableauAffectations = document.querySelector("#corps-tableau-affectations");
     const piedTableauAffectations = document.querySelector("#pied-tableau-affectations");
+    const boutonAfficherTableauActivites = document.querySelector("#afficher-tableau-activites");
+    const dialogueActivites = document.querySelector("#dialogue-activites");
+    const corpsTableauActivites = document.querySelector("#corps-tableau-activites");
     const dialogueBudget = document.querySelector("#dialogue-budget");
     const formulaireBudget = document.querySelector("#formulaire-budget");
     const champSeuilBudgetMensuel = document.querySelector("#seuil-budget-mensuel");
@@ -1366,6 +1429,10 @@
     boutonAfficherTableauAffectations.addEventListener("click", ouvrirTableauAffectations);
     dialogueAffectations.addEventListener("click", (evenement) => {
       if (evenement.target === dialogueAffectations) dialogueAffectations.close();
+    });
+    boutonAfficherTableauActivites.addEventListener("click", ouvrirTableauActivites);
+    dialogueActivites.addEventListener("click", (evenement) => {
+      if (evenement.target === dialogueActivites) dialogueActivites.close();
     });
     formulaireBudget.addEventListener("submit", (evenement) => {
       evenement.preventDefault();
@@ -3142,6 +3209,62 @@
       }
 
       dialogueAffectations.showModal();
+    }
+
+    function ouvrirTableauActivites() {
+      recalculerPlanning();
+      corpsTableauActivites.replaceChildren();
+
+      const unite = champUnite.value.trim() || "Un.";
+      const formatDate = new Intl.DateTimeFormat("fr-FR");
+      const taches = [...zoneTravail.querySelectorAll(".tache")]
+        .sort((a, b) => {
+          const debutA = a.dataset.debutTot ? Number(a.dataset.debutTot) : Number.POSITIVE_INFINITY;
+          const debutB = b.dataset.debutTot ? Number(b.dataset.debutTot) : Number.POSITIVE_INFINITY;
+          if (debutA !== debutB) return debutA - debutB;
+          return String(a.dataset.nom).localeCompare(String(b.dataset.nom), "fr", { sensitivity: "base" });
+        });
+
+      const formaterDateCalculee = (valeur) => {
+        const temps = Number(valeur);
+        return valeur && Number.isFinite(temps) ? formatDate.format(new Date(temps)) : "—";
+      };
+
+      taches.forEach((tache) => {
+        const predecesseurs = liaisons
+          .filter((liaison) => liaison.cible === tache)
+          .map((liaison) => String(liaison.source.dataset.nom))
+          .sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
+        const successeurs = liaisons
+          .filter((liaison) => liaison.source === tache)
+          .map((liaison) => String(liaison.cible.dataset.nom))
+          .sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
+        const ligne = document.createElement("tr");
+        const margeEnMillisecondes = Number(tache.dataset.margeTotale);
+        const marge = tache.dataset.margeTotale && Number.isFinite(margeEnMillisecondes)
+          ? formaterMarge(margeEnMillisecondes)
+          : "—";
+
+        ajouterCelluleTableau(ligne, tache.dataset.nom);
+        ajouterCelluleTableau(ligne, `${formatDuree(Number(tache.dataset.duree))} (${unite})`, "valeur-numerique");
+        ajouterCelluleTableau(ligne, predecesseurs.join(" ; ") || "—");
+        ajouterCelluleTableau(ligne, successeurs.join(" ; ") || "—");
+        ajouterCelluleTableau(ligne, formaterDateCalculee(tache.dataset.debutTot), "valeur-date");
+        ajouterCelluleTableau(ligne, formaterDateCalculee(tache.dataset.finTot), "valeur-date");
+        ajouterCelluleTableau(ligne, marge, "valeur-numerique");
+        ajouterCelluleTableau(ligne, formaterDateCalculee(tache.dataset.finTard), "valeur-date");
+        ajouterCelluleTableau(ligne, formaterMontantEuro(calculerCoutTotalTache(tache)), "valeur-numerique");
+        corpsTableauActivites.appendChild(ligne);
+      });
+
+      if (!taches.length) {
+        const ligneVide = document.createElement("tr");
+        const celluleVide = ajouterCelluleTableau(ligneVide, "Aucune activité dans le projet.", "aucune-affectation");
+        celluleVide.colSpan = 9;
+        corpsTableauActivites.appendChild(ligneVide);
+      }
+
+      dialogueActivites.showModal();
     }
 
     function ouvrirControleBudget() {

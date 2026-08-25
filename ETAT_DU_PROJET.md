@@ -8,7 +8,7 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 657 lignes, 127 999 octets après l’inversion du coût et de la date de fin sous les activités).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (3 780 lignes, 133 233 octets après l’ajout du tableau des activités).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
@@ -31,6 +31,7 @@
 - Le nom du fichier actif est affiché après « Réseau PERT — », actualisé après ouverture, liaison, création ou enregistrement, puis mémorisé pour la reprise automatique. Les noms longs sont tronqués visuellement sans perdre leur intitulé complet dans l’infobulle.
 - À droite des ressources utilisées, un résumé affiche la durée réelle du projet entre sa première date de début et sa dernière date de fin, ainsi que le coût total des affectations. Les intitulés sont en gras et le résumé passe sous les ressources lorsque la largeur disponible est insuffisante.
 - Sous chaque activité, le coût total est placé à gauche et la date de fin est alignée à droite afin de la distinguer clairement de la date de début affichée au-dessus.
+- Un bouton « Tableau des activités », placé à côté du tableau des affectations, ouvre un récapitulatif consultatif recalculé à chaque ouverture : activité, durée, prédécesseurs, successeurs, dates au plus tôt, marge totale, fin au plus tard et coût total. Les dépendances sont indiquées par leurs noms et le tableau défile horizontalement sur écran étroit.
 
 ## État des données dans `planning.json`
 
@@ -132,13 +133,14 @@
 - Ajout validé du nom du fichier actif à côté de « Réseau PERT — ». Le nom est actualisé et mémorisé pour « Ouvrir », « Lier le fichier de travail », « Nouveau projet », « Enregistrer » et la reprise automatique. Tests réussis d’affichage, de mémorisation et de restauration. Publication GitHub autorisée le 25 août 2026.
 - Ajout validé du résumé global à droite de « Ressources utilisées » : durée totale entre la première date de début et la dernière date de fin, dates au format français et coût total des affectations. Les titres « Ressources utilisées », « Durée totale » et « Coût total » sont en gras ; la disposition revient à la ligne sur écran étroit. Tests réussis pour un projet daté, des dates incomplètes et le total des coûts.
 - Inversion validée sous chaque activité : coût total à gauche, date de fin à droite, avec largeur resserrée et alignement explicite de la date. Le contrôle de structure et de syntaxe est réussi. Publication GitHub autorisée le 25 août 2026.
+- Ajout local du tableau consultatif des activités et de leurs dépendances, avec neuf colonnes et défilement horizontal sur écran étroit. Le mode d’emploi est actualisé. Syntaxe JavaScript, structure HTML et test fonctionnel ciblé réussis : recalcul à l’ouverture, deux activités liées, noms du prédécesseur et du successeur, dates, marges, coûts et neuf cellules par ligne. Cette étape n’est pas encore publiée.
 
 ## Prochaine étape proposée
 
-- Après publication de l’état actuel, ajouter le tableau consultatif des activités et de leurs dépendances validé par l’utilisateur.
+- Faire valider visuellement le tableau des activités par l’utilisateur, puis le publier seulement après son accord explicite.
 
 ## Reste à faire
 
-- Attendre l’accord de l’utilisateur avant toute modification du programme.
+- Attendre la validation de l’utilisateur avant toute autre modification du programme ou publication.
 - Ne traiter ensuite qu’une seule modification à la fois.
 - Mettre à jour ce document après chaque modification validée.
