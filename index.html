@@ -517,6 +517,46 @@
       width: min(520px, calc(100vw - 32px));
     }
 
+    #dialogue-calendrier {
+      width: min(560px, calc(100vw - 32px));
+    }
+
+    .parametre-calendrier {
+      margin-bottom: 14px;
+    }
+
+    .ajout-jour-non-travaille {
+      display: grid;
+      grid-template-columns: minmax(160px, 1fr) auto;
+      align-items: end;
+      gap: 8px;
+    }
+
+    #liste-jours-feries-officiels,
+    #liste-jours-non-travailles {
+      max-height: 210px;
+      margin: 10px 0 0;
+      padding: 0;
+      overflow: auto;
+      list-style: none;
+    }
+
+    #liste-jours-feries-officiels li,
+    #liste-jours-non-travailles li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 8px;
+      border-bottom: 1px solid #dfe3e6;
+    }
+
+    #liste-jours-feries-officiels .liste-vide,
+    #liste-jours-non-travailles .liste-vide {
+      color: #64717d;
+      font-style: italic;
+    }
+
     #dialogue-verification {
       width: min(650px, calc(100vw - 32px));
     }
@@ -808,6 +848,7 @@
     .graduation-gantt {
       position: absolute;
       top: 7px;
+      z-index: 2;
       padding-left: 5px;
       color: #35414c;
       white-space: nowrap;
@@ -816,6 +857,7 @@
     .barre-gantt {
       position: absolute;
       top: 2px;
+      z-index: 2;
       min-width: 3px;
       height: 23px;
       overflow: hidden;
@@ -837,6 +879,7 @@
     .marge-gantt {
       position: absolute;
       top: 2px;
+      z-index: 2;
       box-sizing: border-box;
       min-width: 1px;
       height: 23px;
@@ -844,6 +887,14 @@
       border-left: 0;
       border-radius: 0 4px 4px 0;
       background: #fff;
+    }
+
+    .jour-non-travaille-gantt {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: #eef1f3;
+      pointer-events: none;
     }
 
     .dates-indisponibles-gantt {
@@ -1112,6 +1163,7 @@
         <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
         <button id="nouveau-projet" class="bouton-barre" type="button">Nouveau projet</button>
         <button id="gerer-ressources" class="bouton-barre" type="button">Ressources</button>
+        <button id="ouvrir-calendrier" class="bouton-barre" type="button">Calendrier</button>
         <div class="parametre-unite">
           <label for="unite">Unité</label>
           <input id="unite" type="text" value="j" maxlength="8" autocomplete="off" spellcheck="false">
@@ -1240,6 +1292,43 @@
 
       <div class="actions">
         <button id="fermer-ressources" type="button">Fermer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialogue-calendrier">
+    <form id="formulaire-calendrier">
+      <h2>Calendrier du projet</h2>
+
+      <div class="parametre-calendrier">
+        <label for="mode-calendrier">Mode de calcul</label>
+        <select id="mode-calendrier">
+          <option value="ouvres">Jours ouvrés — samedi et dimanche exclus</option>
+          <option value="calendaires">Jours calendaires — week-ends compris</option>
+        </select>
+      </div>
+
+      <div class="parametre-calendrier">
+        <label for="calendrier-officiel">Jours fériés officiels</label>
+        <select id="calendrier-officiel">
+          <option value="france-metropolitaine">France métropolitaine</option>
+          <option value="aucun">Aucun calendrier officiel</option>
+        </select>
+      </div>
+
+      <label>Jours fériés officiels appliqués</label>
+      <ul id="liste-jours-feries-officiels"></ul>
+
+      <label for="jour-non-travaille">Autres jours non travaillés ajoutés au projet</label>
+      <div class="ajout-jour-non-travaille">
+        <input id="jour-non-travaille" type="date">
+        <button id="ajouter-jour-non-travaille" type="button">Ajouter</button>
+      </div>
+      <ul id="liste-jours-non-travailles"></ul>
+
+      <div class="actions">
+        <button id="annuler-calendrier" type="button">Annuler</button>
+        <button type="submit">Appliquer</button>
       </div>
     </form>
   </dialog>
@@ -1404,6 +1493,7 @@
         <ul>
           <li><strong>Ressources</strong> ouvre le catalogue : renseignez le nom, la discipline et le coût unitaire, puis cliquez sur <strong>Ajouter</strong>.</li>
           <li>Sélectionnez une ressource pour la modifier ou la supprimer. Une ressource déjà affectée ne peut pas être supprimée.</li>
+          <li><strong>Calendrier</strong> choisit les jours ouvrés ou calendaires et ajoute les dates non travaillées.</li>
         </ul>
 
         <h3>Affecter une ressource</h3>
@@ -1460,6 +1550,7 @@
     const boutonImprimerProjet = document.querySelector("#imprimer-projet");
     const boutonOuvrirModeEmploi = document.querySelector("#ouvrir-mode-emploi");
     const boutonGererRessources = document.querySelector("#gerer-ressources");
+    const boutonOuvrirCalendrier = document.querySelector("#ouvrir-calendrier");
     const fichierProjet = document.querySelector("#fichier-projet");
     const dialogueDetails = document.querySelector("#dialogue-details");
     const formulaireDetails = document.querySelector("#formulaire-details");
@@ -1483,6 +1574,15 @@
     const boutonModifierRessource = document.querySelector("#modifier-ressource");
     const boutonSupprimerRessource = document.querySelector("#supprimer-ressource");
     const boutonFermerRessources = document.querySelector("#fermer-ressources");
+    const dialogueCalendrier = document.querySelector("#dialogue-calendrier");
+    const formulaireCalendrier = document.querySelector("#formulaire-calendrier");
+    const champModeCalendrier = document.querySelector("#mode-calendrier");
+    const champCalendrierOfficiel = document.querySelector("#calendrier-officiel");
+    const listeJoursFeriesOfficiels = document.querySelector("#liste-jours-feries-officiels");
+    const champJourNonTravaille = document.querySelector("#jour-non-travaille");
+    const boutonAjouterJourNonTravaille = document.querySelector("#ajouter-jour-non-travaille");
+    const listeJoursNonTravailles = document.querySelector("#liste-jours-non-travailles");
+    const boutonAnnulerCalendrier = document.querySelector("#annuler-calendrier");
     const resumeRessources = document.querySelector("#resume-ressources");
     const resumeProjetGlobal = document.querySelector("#resume-projet-global");
     const boutonAfficherTableauAffectations = document.querySelector("#afficher-tableau-affectations");
@@ -1517,6 +1617,7 @@
     const MILLISECONDES_PAR_MINUTE = 60 * 1000;
     const MILLISECONDES_PAR_HEURE = 60 * MILLISECONDES_PAR_MINUTE;
     const MILLISECONDES_PAR_JOUR = 24 * MILLISECONDES_PAR_HEURE;
+    const cacheJoursFeriesFrance = new Map();
     const CLE_SAUVEGARDE_LOCALE = location.hostname === "88ja88.github.io"
       ? "planning-reseau-sauvegarde-automatique-v4"
       : "planning-reseau-sauvegarde-automatique-v2";
@@ -1533,6 +1634,8 @@
     let affectationsDetails = [];
     let ressourcesProjet = [];
     let seuilBudgetMensuel = 0;
+    let calendrierProjet = creerCalendrierParDefaut();
+    let joursNonTravaillesEdition = [];
     let fichierTravailLie = null;
     let ouvertureProjetEnCours = false;
     let chargementInitialActif = true;
@@ -1636,6 +1739,14 @@
       if (evenement.target === dialogueModeEmploi) dialogueModeEmploi.close();
     });
     boutonGererRessources.addEventListener("click", ouvrirGestionRessources);
+    boutonOuvrirCalendrier.addEventListener("click", ouvrirCalendrierProjet);
+    boutonAjouterJourNonTravaille.addEventListener("click", ajouterJourNonTravailleEdition);
+    champCalendrierOfficiel.addEventListener("change", afficherJoursFeriesOfficiels);
+    formulaireCalendrier.addEventListener("submit", appliquerCalendrierProjet);
+    boutonAnnulerCalendrier.addEventListener("click", () => dialogueCalendrier.close());
+    dialogueCalendrier.addEventListener("click", (evenement) => {
+      if (evenement.target === dialogueCalendrier) dialogueCalendrier.close();
+    });
     fichierProjet.addEventListener("change", ouvrirProjet);
     window.addEventListener("beforeprint", preparerImpression);
     window.addEventListener("resize", () => {
@@ -2605,6 +2716,7 @@
           debutTot = new Date(Math.max(...finsPredecesseurs.map((date) => date.getTime())));
           if (contrainte && contrainte > debutTot) debutTot = contrainte;
         }
+        if (debutTot) debutTot = ajusterDateAuCalendrier(debutTot, 1);
 
         tache.dataset.debutTot = debutTot ? String(debutTot.getTime()) : "";
         debutsTot.set(tache, debutTot);
@@ -2620,7 +2732,7 @@
 
         const duree = Number(tache.dataset.duree);
         const finTot = debutTot
-          ? new Date(debutTot.getTime() + convertirDureeEnMillisecondes(duree))
+          ? ajouterDureeProjet(debutTot, duree)
           : null;
         finsTot.set(tache, finTot);
         tache.dataset.finTot = finTot ? String(finTot.getTime()) : "";
@@ -2657,7 +2769,7 @@
 
         const duree = Number(tache.dataset.duree);
         const debutTard = finTard
-          ? new Date(finTard.getTime() - convertirDureeEnMillisecondes(duree))
+          ? soustraireDureeProjet(finTard, duree)
           : null;
         finsTard.set(tache, finTard);
         debutsTard.set(tache, debutTard);
@@ -2668,7 +2780,7 @@
 
         const debutTot = debutsTot.get(tache);
         const margeEnMillisecondes = debutTot && debutTard
-          ? Math.max(0, debutTard.getTime() - debutTot.getTime())
+          ? calculerDureeTravailEnMillisecondes(debutTot, debutTard)
           : null;
         tache.dataset.margeTotale = margeEnMillisecondes === null
           ? ""
@@ -2725,7 +2837,7 @@
       }
 
       if (["sem", "semaine", "semaines"].includes(unite)) {
-        return duree * 7 * MILLISECONDES_PAR_JOUR;
+        return duree * (calendrierProjet.mode === "ouvres" ? 5 : 7) * MILLISECONDES_PAR_JOUR;
       }
 
       return duree * MILLISECONDES_PAR_JOUR;
@@ -2748,6 +2860,238 @@
         "-",
         deuxChiffres(date.getDate())
       ].join("");
+    }
+
+    function creerCalendrierParDefaut() {
+      return {
+        mode: "ouvres",
+        calendrierOfficiel: "france-metropolitaine",
+        joursNonTravailles: []
+      };
+    }
+
+    function calculerDimanchePaques(annee) {
+      const a = annee % 19;
+      const b = Math.floor(annee / 100);
+      const c = annee % 100;
+      const d = Math.floor(b / 4);
+      const e = b % 4;
+      const f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const h = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4);
+      const k = c % 4;
+      const l = (32 + 2 * e + 2 * i - h - k) % 7;
+      const m = Math.floor((a + 11 * h + 22 * l) / 451);
+      const mois = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+      const jour = ((h + l - 7 * m + 114) % 31) + 1;
+      return new Date(annee, mois, jour);
+    }
+
+    function obtenirJoursFeriesFrance(annee) {
+      if (cacheJoursFeriesFrance.has(annee)) return cacheJoursFeriesFrance.get(annee);
+      const paques = calculerDimanchePaques(annee);
+      const dateMobile = (decalage) => {
+        const date = new Date(paques.getTime());
+        date.setDate(date.getDate() + decalage);
+        return date;
+      };
+      const jours = [
+        { nom: "Jour de l’An", date: new Date(annee, 0, 1) },
+        { nom: "Lundi de Pâques", date: dateMobile(1) },
+        { nom: "Fête du Travail", date: new Date(annee, 4, 1) },
+        { nom: "Victoire 1945", date: new Date(annee, 4, 8) },
+        { nom: "Ascension", date: dateMobile(39) },
+        { nom: "Lundi de Pentecôte", date: dateMobile(50) },
+        { nom: "Fête nationale", date: new Date(annee, 6, 14) },
+        { nom: "Assomption", date: new Date(annee, 7, 15) },
+        { nom: "Toussaint", date: new Date(annee, 10, 1) },
+        { nom: "Armistice 1918", date: new Date(annee, 10, 11) },
+        { nom: "Noël", date: new Date(annee, 11, 25) }
+      ].map((jourFerie) => ({ ...jourFerie, valeur: formaterDateLocale(jourFerie.date) }));
+      cacheJoursFeriesFrance.set(annee, jours);
+      return jours;
+    }
+
+    function estJourTravaille(date) {
+      const cle = formaterDateLocale(date);
+      if (calendrierProjet.joursNonTravailles.includes(cle)) return false;
+      if (
+        calendrierProjet.calendrierOfficiel === "france-metropolitaine"
+        && obtenirJoursFeriesFrance(date.getFullYear()).some((jour) => jour.valeur === cle)
+      ) return false;
+      if (calendrierProjet.mode === "ouvres" && [0, 6].includes(date.getDay())) return false;
+      return true;
+    }
+
+    function ajusterDateAuCalendrier(date, sens = 1) {
+      const resultat = new Date(date.getTime());
+      while (!estJourTravaille(resultat)) {
+        resultat.setDate(resultat.getDate() + sens);
+        resultat.setHours(0, 0, 0, 0);
+      }
+      return resultat;
+    }
+
+    function ajouterDureeProjet(date, duree) {
+      let restant = convertirDureeEnMillisecondes(duree);
+      let courant = ajusterDateAuCalendrier(date, 1);
+
+      while (restant > 0.1) {
+        if (!estJourTravaille(courant)) {
+          courant = ajusterDateAuCalendrier(courant, 1);
+          continue;
+        }
+        const debutJour = new Date(courant.getFullYear(), courant.getMonth(), courant.getDate());
+        const finJour = new Date(courant.getFullYear(), courant.getMonth(), courant.getDate() + 1);
+        const longueurJour = finJour.getTime() - debutJour.getTime();
+        const disponible = ((finJour.getTime() - courant.getTime()) / longueurJour) * MILLISECONDES_PAR_JOUR;
+        if (restant < disponible - 0.1) {
+          return new Date(courant.getTime() + (restant / MILLISECONDES_PAR_JOUR) * longueurJour);
+        }
+        restant -= disponible;
+        courant = ajusterDateAuCalendrier(finJour, 1);
+      }
+      return courant;
+    }
+
+    function soustraireDureeProjet(date, duree) {
+      let restant = convertirDureeEnMillisecondes(duree);
+      let courant = new Date(date.getTime());
+
+      while (restant > 0.1) {
+        let reference = new Date(courant.getTime() - 1);
+        while (!estJourTravaille(reference)) {
+          reference = new Date(reference.getFullYear(), reference.getMonth(), reference.getDate() - 1, 23, 59, 59, 999);
+        }
+        const debutJour = new Date(reference.getFullYear(), reference.getMonth(), reference.getDate());
+        const finJour = new Date(reference.getFullYear(), reference.getMonth(), reference.getDate() + 1);
+        const longueurJour = finJour.getTime() - debutJour.getTime();
+        const finDisponible = Math.min(courant.getTime(), finJour.getTime());
+        const disponible = ((finDisponible - debutJour.getTime()) / longueurJour) * MILLISECONDES_PAR_JOUR;
+        if (restant <= disponible + 0.1) {
+          return new Date(finDisponible - (restant / MILLISECONDES_PAR_JOUR) * longueurJour);
+        }
+        restant -= disponible;
+        courant = debutJour;
+      }
+      return courant;
+    }
+
+    function calculerDureeTravailEnMillisecondes(debut, fin) {
+      if (!(debut instanceof Date) || !(fin instanceof Date) || fin <= debut) return 0;
+      let total = 0;
+      let jour = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate());
+
+      while (jour < fin) {
+        const jourSuivant = new Date(jour.getFullYear(), jour.getMonth(), jour.getDate() + 1);
+        if (estJourTravaille(jour)) {
+          const debutPartie = Math.max(debut.getTime(), jour.getTime());
+          const finPartie = Math.min(fin.getTime(), jourSuivant.getTime());
+          if (finPartie > debutPartie) {
+            total += ((finPartie - debutPartie) / (jourSuivant.getTime() - jour.getTime())) * MILLISECONDES_PAR_JOUR;
+          }
+        }
+        jour = jourSuivant;
+      }
+      return total;
+    }
+
+    function ouvrirCalendrierProjet() {
+      champModeCalendrier.value = calendrierProjet.mode;
+      champCalendrierOfficiel.value = calendrierProjet.calendrierOfficiel;
+      champJourNonTravaille.value = "";
+      joursNonTravaillesEdition = [...calendrierProjet.joursNonTravailles];
+      afficherJoursFeriesOfficiels();
+      afficherJoursNonTravaillesEdition();
+      dialogueCalendrier.showModal();
+    }
+
+    function obtenirAnneesProjet() {
+      const annees = [];
+      zoneTravail.querySelectorAll(".tache").forEach((tache) => {
+        [tache.dataset.debutTot, tache.dataset.finTot].forEach((valeur) => {
+          if (!valeur || !Number.isFinite(Number(valeur))) return;
+          annees.push(new Date(Number(valeur)).getFullYear());
+        });
+        const contrainte = lireDateLocale(tache.dataset.contrainteDebut);
+        if (contrainte) annees.push(contrainte.getFullYear());
+      });
+      if (!annees.length) return [new Date().getFullYear()];
+      const premiere = Math.min(...annees);
+      const derniere = Math.max(...annees);
+      return Array.from({ length: derniere - premiere + 1 }, (_, index) => premiere + index);
+    }
+
+    function afficherJoursFeriesOfficiels() {
+      listeJoursFeriesOfficiels.replaceChildren();
+      if (champCalendrierOfficiel.value !== "france-metropolitaine") {
+        const vide = document.createElement("li");
+        vide.className = "liste-vide";
+        vide.textContent = "Aucun calendrier officiel appliqué.";
+        listeJoursFeriesOfficiels.appendChild(vide);
+        return;
+      }
+      const formatDate = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+      obtenirAnneesProjet().flatMap(obtenirJoursFeriesFrance).forEach((jourFerie) => {
+        const ligne = document.createElement("li");
+        ligne.textContent = `${jourFerie.nom} — ${formatDate.format(jourFerie.date)}`;
+        listeJoursFeriesOfficiels.appendChild(ligne);
+      });
+    }
+
+    function ajouterJourNonTravailleEdition() {
+      const valeur = champJourNonTravaille.value;
+      const date = lireDateLocale(valeur);
+      if (!valeur || !date || formaterDateLocale(date) !== valeur) {
+        window.alert("Choisissez une date valide.");
+        return;
+      }
+      if (!joursNonTravaillesEdition.includes(valeur)) {
+        joursNonTravaillesEdition.push(valeur);
+        joursNonTravaillesEdition.sort();
+      }
+      champJourNonTravaille.value = "";
+      afficherJoursNonTravaillesEdition();
+    }
+
+    function afficherJoursNonTravaillesEdition() {
+      listeJoursNonTravailles.replaceChildren();
+      if (!joursNonTravaillesEdition.length) {
+        const vide = document.createElement("li");
+        vide.className = "liste-vide";
+        vide.textContent = "Aucune date particulière exclue.";
+        listeJoursNonTravailles.appendChild(vide);
+        return;
+      }
+      const formatDate = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+      joursNonTravaillesEdition.forEach((valeur) => {
+        const ligne = document.createElement("li");
+        const libelle = document.createElement("span");
+        libelle.textContent = formatDate.format(lireDateLocale(valeur));
+        const supprimer = document.createElement("button");
+        supprimer.type = "button";
+        supprimer.textContent = "Retirer";
+        supprimer.addEventListener("click", () => {
+          joursNonTravaillesEdition = joursNonTravaillesEdition.filter((date) => date !== valeur);
+          afficherJoursNonTravaillesEdition();
+        });
+        ligne.append(libelle, supprimer);
+        listeJoursNonTravailles.appendChild(ligne);
+      });
+    }
+
+    function appliquerCalendrierProjet(evenement) {
+      evenement.preventDefault();
+      calendrierProjet = {
+        mode: champModeCalendrier.value === "calendaires" ? "calendaires" : "ouvres",
+        calendrierOfficiel: champCalendrierOfficiel.value === "aucun"
+          ? "aucun"
+          : "france-metropolitaine",
+        joursNonTravailles: [...joursNonTravaillesEdition].sort()
+      };
+      dialogueCalendrier.close();
+      recalculerPlanning();
     }
 
     function verifierProjet() {
@@ -2874,7 +3218,10 @@
             erreurs.push(`L’activité « ${nom} » finit avant son début.`);
           } else if (
             Number.isFinite(dureeTache)
-            && Math.abs((fin - debut) - convertirDureeEnMillisecondes(dureeTache)) > 1
+            && Math.abs(
+              calculerDureeTravailEnMillisecondes(new Date(debut), new Date(fin))
+              - convertirDureeEnMillisecondes(dureeTache)
+            ) > 1
           ) {
             erreurs.push(`La durée et les dates calculées de l’activité « ${nom} » ne correspondent pas.`);
           }
@@ -2945,15 +3292,24 @@
     }
 
     function calculerBesoinsPersonnel(occupations) {
-      const bornes = [...new Set(occupations.flatMap((occupation) => [
+      const bornesInitiales = occupations.flatMap((occupation) => [
         occupation.debut,
         occupation.fin
-      ]))].sort((a, b) => a - b);
+      ]);
+      const premiereBorne = Math.min(...bornesInitiales);
+      const derniereBorne = Math.max(...bornesInitiales);
+      let jour = new Date(new Date(premiereBorne).getFullYear(), new Date(premiereBorne).getMonth(), new Date(premiereBorne).getDate() + 1);
+      while (jour.getTime() < derniereBorne) {
+        bornesInitiales.push(jour.getTime());
+        jour = new Date(jour.getFullYear(), jour.getMonth(), jour.getDate() + 1);
+      }
+      const bornes = [...new Set(bornesInitiales)].sort((a, b) => a - b);
       const besoins = [];
 
       for (let index = 0; index < bornes.length - 1; index += 1) {
         const debut = bornes[index];
         const fin = bornes[index + 1];
+        if (!calculerDureeTravailEnMillisecondes(new Date(debut), new Date(fin))) continue;
         const chargeMoyenne = occupations
           .filter((occupation) => occupation.debut < fin && occupation.fin > debut)
           .reduce((total, occupation) => (
@@ -2965,7 +3321,7 @@
         const besoinPrecedent = besoins[besoins.length - 1];
         if (
           besoinPrecedent
-          && besoinPrecedent.fin === debut
+          && calculerDureeTravailEnMillisecondes(new Date(besoinPrecedent.fin), new Date(debut)) === 0
           && besoinPrecedent.personnes === personnes
         ) {
           besoinPrecedent.fin = fin;
@@ -3115,6 +3471,7 @@
       boutonLierFichierTravail.removeAttribute("title");
       ressourcesProjet = lireCatalogueRessourcesLocal();
       seuilBudgetMensuel = 0;
+      calendrierProjet = creerCalendrierParDefaut();
       champUnite.value = "j";
       viderProjet();
       ouvertureProjetEnCours = false;
@@ -3144,6 +3501,11 @@
         version: 1,
         unite: champUnite.value.trim() || "Un.",
         seuilBudgetMensuel,
+        calendrier: {
+          mode: calendrierProjet.mode,
+          calendrierOfficiel: calendrierProjet.calendrierOfficiel,
+          joursNonTravailles: [...calendrierProjet.joursNonTravailles]
+        },
         ressources: ressourcesProjet.map((ressource) => ({ ...ressource })),
         taches: taches.map((tache) => ({
           id: tache.dataset.id,
@@ -3295,7 +3657,8 @@
         const debut = Math.min(...taches.map((tache) => Number(tache.dataset.debutTot)));
         const fin = Math.max(...taches.map((tache) => Number(tache.dataset.finTot)));
         const duree = Math.round(
-          ((fin - debut) / convertirDureeEnMillisecondes(1)) * 100
+          (calculerDureeTravailEnMillisecondes(new Date(debut), new Date(fin))
+            / convertirDureeEnMillisecondes(1)) * 100
         ) / 100;
         const unite = champUnite.value.trim() || "Un.";
         const formatDate = new Intl.DateTimeFormat("fr-FR");
@@ -3486,7 +3849,10 @@
         return;
       }
 
-      const millisecondesParUnite = convertirDureeEnMillisecondes(1);
+      const uniteGantt = champUnite.value.trim().toLocaleLowerCase("fr");
+      const millisecondesParUnite = ["sem", "semaine", "semaines"].includes(uniteGantt)
+        ? 7 * MILLISECONDES_PAR_JOUR
+        : convertirDureeEnMillisecondes(1);
       const debutProjet = tachesDatees.length
         ? Math.min(...tachesDatees.map((tache) => Number(tache.dataset.debutTot)))
         : 0;
@@ -3515,6 +3881,35 @@
       gantt.style.setProperty("--pas-grille-gantt", `${largeurPas}px`);
       uniteTempsGantt.textContent = `Unité de temps : ${champUnite.value.trim() || "Un."}`;
 
+      const periodesNonTravaillees = [];
+      if (tachesDatees.length) {
+        let jour = new Date(new Date(debutProjet).getFullYear(), new Date(debutProjet).getMonth(), new Date(debutProjet).getDate());
+        while (jour.getTime() < finProjet) {
+          const jourSuivant = new Date(jour.getFullYear(), jour.getMonth(), jour.getDate() + 1);
+          if (!estJourTravaille(jour)) {
+            const debutPeriode = Math.max(debutProjet, jour.getTime());
+            const finPeriode = Math.min(finProjet, jourSuivant.getTime());
+            periodesNonTravaillees.push({
+              left: ((debutPeriode - debutProjet) / millisecondesParUnite) * pixelsParUnite,
+              width: ((finPeriode - debutPeriode) / millisecondesParUnite) * pixelsParUnite,
+              date: formaterDateLocale(jour)
+            });
+          }
+          jour = jourSuivant;
+        }
+      }
+
+      const ajouterPeriodesNonTravaillees = (conteneur) => {
+        periodesNonTravaillees.forEach((periode) => {
+          const zone = document.createElement("span");
+          zone.className = "jour-non-travaille-gantt";
+          zone.style.left = `${periode.left}px`;
+          zone.style.width = `${periode.width}px`;
+          zone.title = `Jour non travaillé : ${periode.date}`;
+          conteneur.appendChild(zone);
+        });
+      };
+
       const entete = document.createElement("div");
       entete.className = "ligne-gantt entete-gantt";
       const libelleEntete = document.createElement("div");
@@ -3522,6 +3917,7 @@
       libelleEntete.textContent = "Activités";
       const echelle = document.createElement("div");
       echelle.className = "echelle-gantt";
+      ajouterPeriodesNonTravaillees(echelle);
 
       if (tachesDatees.length) {
         for (let position = 0; position <= etendueEnUnites; position += pasGraduation) {
@@ -3552,6 +3948,7 @@
         libelle.title = tache.dataset.nom;
         const zoneTemps = document.createElement("div");
         zoneTemps.className = "zone-temps-gantt";
+        ajouterPeriodesNonTravaillees(zoneTemps);
 
         const debut = Number(tache.dataset.debutTot);
         const fin = Number(tache.dataset.finTot);
@@ -3576,7 +3973,7 @@
             const marge = document.createElement("div");
             marge.className = "marge-gantt";
             marge.style.left = `${((fin - debutProjet) / millisecondesParUnite) * pixelsParUnite}px`;
-            marge.style.width = `${Math.max(1, (margeEnMillisecondes / millisecondesParUnite) * pixelsParUnite)}px`;
+            marge.style.width = `${Math.max(1, ((finTard - fin) / millisecondesParUnite) * pixelsParUnite)}px`;
             marge.title = `Marge totale : ${formaterMarge(margeEnMillisecondes)}`;
             zoneTemps.appendChild(marge);
           }
@@ -3649,16 +4046,22 @@
 
         premiereDate = Math.min(premiereDate, debut);
         derniereDate = Math.max(derniereDate, fin);
+        const dureeTravailActivite = calculerDureeTravailEnMillisecondes(
+          new Date(debut),
+          new Date(fin)
+        );
         let debutMois = new Date(new Date(debut).getFullYear(), new Date(debut).getMonth(), 1);
         while (debutMois.getTime() < fin) {
           const finMois = new Date(debutMois.getFullYear(), debutMois.getMonth() + 1, 1);
-          const chevauchement = Math.max(
-            0,
-            Math.min(fin, finMois.getTime()) - Math.max(debut, debutMois.getTime())
+          const debutPartie = new Date(Math.max(debut, debutMois.getTime()));
+          const finPartie = new Date(Math.min(fin, finMois.getTime()));
+          const chevauchement = calculerDureeTravailEnMillisecondes(
+            debutPartie,
+            finPartie
           );
-          if (chevauchement > 0) {
+          if (chevauchement > 0 && dureeTravailActivite > 0) {
             const cle = `${debutMois.getFullYear()}-${String(debutMois.getMonth() + 1).padStart(2, "0")}`;
-            const coutMois = cout * chevauchement / (fin - debut);
+            const coutMois = cout * chevauchement / dureeTravailActivite;
             coutsParMois.set(cle, (coutsParMois.get(cle) || 0) + coutMois);
           }
           debutMois = finMois;
@@ -3813,6 +4216,11 @@
     function afficherProjet(projet) {
       ressourcesProjet = projet.ressources.map((ressource) => ({ ...ressource }));
       seuilBudgetMensuel = projet.seuilBudgetMensuel;
+      calendrierProjet = {
+        mode: projet.calendrier.mode,
+        calendrierOfficiel: projet.calendrier.calendrierOfficiel,
+        joursNonTravailles: [...projet.calendrier.joursNonTravailles]
+      };
       viderProjet();
       champUnite.value = projet.unite;
       const tachesParIdentifiant = new Map();
@@ -3990,7 +4398,41 @@
       if (!Number.isFinite(seuilBudgetMensuel) || seuilBudgetMensuel < 0) {
         throw new Error("Seuil budgétaire invalide");
       }
-      return { unite, seuilBudgetMensuel, ressources, taches, liaisons: liaisonsNormalisees };
+      const calendrierBrut = donnees.calendrier && typeof donnees.calendrier === "object"
+        ? donnees.calendrier
+        : creerCalendrierParDefaut();
+      const modeCalendrier = calendrierBrut.mode === "calendaires" ? "calendaires" : "ouvres";
+      const calendrierOfficiel = calendrierBrut.calendrierOfficiel === "aucun"
+        ? "aucun"
+        : "france-metropolitaine";
+      const joursNonTravailles = calendrierBrut.joursNonTravailles === undefined
+        ? []
+        : calendrierBrut.joursNonTravailles;
+      if (!Array.isArray(joursNonTravailles)) throw new Error("Calendrier invalide");
+      const joursNormalises = [...new Set(joursNonTravailles.map((valeur) => {
+        const date = typeof valeur === "string" ? lireDateLocale(valeur) : null;
+        if (
+          typeof valeur !== "string"
+          || !/^\d{4}-\d{2}-\d{2}$/.test(valeur)
+          || !date
+          || formaterDateLocale(date) !== valeur
+        ) {
+          throw new Error("Jour non travaillé invalide");
+        }
+        return valeur;
+      }))].sort();
+      return {
+        unite,
+        seuilBudgetMensuel,
+        calendrier: {
+          mode: modeCalendrier,
+          calendrierOfficiel,
+          joursNonTravailles: joursNormalises
+        },
+        ressources,
+        taches,
+        liaisons: liaisonsNormalisees
+      };
     }
 
     function normaliserAffectationsRessources(donnees, identifiantsRessources, dureeTache) {

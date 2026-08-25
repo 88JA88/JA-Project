@@ -8,7 +8,7 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (4 107 lignes, 144 407 octets après l’ajout visuel de la marge totale dans le Gantt).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (4 549 lignes, 163 086 octets après l’ajout du calendrier officiel France métropolitaine).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
@@ -33,6 +33,10 @@
 - Sous chaque activité, le coût total est placé à gauche et la date de fin est alignée à droite afin de la distinguer clairement de la date de début affichée au-dessus.
 - Un bouton « Tableau des activités », placé à côté du tableau des affectations, ouvre un récapitulatif consultatif recalculé à chaque ouverture : activité, durée, prédécesseurs, successeurs, dates au plus tôt, marge totale, fin au plus tard et coût total. Les dépendances sont indiquées par leurs noms, le nom des activités du chemin critique est en gras et le tableau défile horizontalement sur écran étroit.
 - Un bouton « Diagramme de Gantt » ouvre une visualisation consultative reconstruite à partir des dates du PERT : une ligne resserrée et une barre par activité, unité de temps affichée, échelle temporelle automatique dont chaque ligne verticale fine et contrastée correspond à la date indiquée, chemin critique en rouge et en gras, marge totale prolongée par une zone blanche bordée, libellés maintenus à gauche pendant le défilement horizontal et signalement des activités sans dates calculables. Le Gantt ne permet aucune modification du projet.
+- Un bouton « Calendrier » ouvre le calendrier du projet. Le mode par défaut est « jours ouvrés » avec exclusion du samedi et du dimanche ; l’utilisateur peut choisir les jours calendaires et ajouter ou retirer des dates non travaillées.
+- Le calendrier officiel « France métropolitaine » est appliqué par défaut et peut être désactivé. La fenêtre affiche séparément, avec leur nom et leur date, les onze jours fériés officiels de chaque année couverte par le projet et les dates particulières ajoutées manuellement. Les fêtes mobiles sont calculées à partir de Pâques.
+- Le calendrier est enregistré dans le JSON ; les anciens JSON sans calendrier sont interprétés en jours ouvrés avec le calendrier officiel France métropolitaine.
+- Le même calendrier commande les calculs au plus tôt et au plus tard, les marges, les dépendances, la vérification des durées, le résumé global, la répartition mensuelle du budget, le diagnostic de charge et le Gantt. Les périodes non travaillées sont grisées dans le Gantt.
 
 ## État des données dans `planning.json`
 
@@ -141,10 +145,13 @@
 - Ajustement local validé techniquement du Gantt : lignes ramenées à 28 px pour rapprocher les barres, affichage explicite de l’unité de temps et ligne verticale fine à chaque passage du dimanche au lundi. Le test sur une période de seize jours confirme deux séparateurs hebdomadaires cohérents. Ces ajustements ne sont pas encore publiés.
 - Retrait local des séparateurs hebdomadaires, jugés ambigus : les seules lignes verticales restantes correspondent désormais exactement aux dates de l’échelle. Ajout d’un prolongement blanc bordé représentant la marge totale à droite de la barre colorée. Le test confirme l’alignement des graduations, une marge visuelle de 2 j sur une activité non critique et l’absence de prolongement pour une activité critique. Cette correction n’est pas encore publiée.
 - Renforcement local du contraste des lignes verticales datées après constat visuel de leur manque de visibilité. Leur épaisseur reste limitée à 1 px et leur alignement avec les dates demeure inchangé. Cette correction n’est pas encore publiée.
+- Ajout local du calendrier de projet et remplacement des additions calendaires directes par un moteur de temps travaillé. Tests réussis : vendredi + 1 j = lundi ; jeudi + 5 j = jeudi suivant ; vendredi + 1 j avec lundi exclu = mardi ; calcul inverse au plus tard exact ; 1 semaine ouvrée = 5 j ; mode calendaire conservé ; durée fractionnaire de 1,5 j du vendredi au lundi midi ; ancien JSON sans calendrier normalisé en jours ouvrés ; calendrier JSON sauvegardé et dates exclues dédoublonnées.
+- Test ciblé du réseau PERT réussi avec deux activités liées : exclusion du week-end, décalage d’un lundi non travaillé, dépendance respectée, dates au plus tard cohérentes et chemin critique inchangé. Syntaxe JavaScript, structure de la fenêtre Calendrier et contrôle des différences réussis. Cette évolution n’est pas encore publiée.
+- Ajout local du calendrier officiel France métropolitaine, vérifié d’après la liste officielle de Service-Public.fr. Test 2026 réussi : onze jours fériés, lundi de Pâques le 6 avril, Ascension le 14 mai, lundi de Pentecôte le 25 mai et fête nationale le 14 juillet ; un jour d’activité débutant le vendredi 3 avril finit le mardi 7 avril. La désactivation du calendrier officiel et sa persistance JSON sont également testées. Cette évolution n’est pas encore publiée.
 
 ## Prochaine étape proposée
 
-- Faire contrôler visuellement la première version du Gantt par l’utilisateur, notamment la lisibilité et le défilement sur ordinateur et iPad, puis corriger un seul point à la fois avant toute publication.
+- Faire contrôler visuellement le calendrier et le planning recalculé par l’utilisateur avec son projet réel, puis corriger un seul point à la fois avant toute publication.
 
 ## Reste à faire
 
