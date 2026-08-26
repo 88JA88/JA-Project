@@ -1000,10 +1000,34 @@
     }
 
     #liste-affectations {
+      display: grid;
+      gap: 6px;
       min-height: 105px;
       margin-bottom: 10px;
       color: #111;
       font-size: 11px;
+    }
+
+    .affectation-liste-bouton {
+      width: 100%;
+      height: auto;
+      min-height: 44px;
+      padding: 8px 10px;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .affectation-liste-bouton.selectionnee {
+      border-color: #2877c7;
+      background: #eaf3fc;
+      box-shadow: 0 0 0 2px rgb(40 119 199 / 18%);
+    }
+
+    .liste-affectations-vide {
+      margin: 0;
+      padding: 12px;
+      color: #64717d;
+      text-align: center;
     }
 
     .actions-affectation {
@@ -1059,6 +1083,23 @@
       height: 32px;
       padding: 0 11px;
       white-space: nowrap;
+    }
+
+    .selecteur-fichier {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .selecteur-fichier input[type="file"] {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+      cursor: pointer;
     }
 
     #supprimer-activite:disabled {
@@ -1117,6 +1158,10 @@
     }
 
     @media (hover: none) and (pointer: coarse) {
+      .liaison-cible {
+        stroke-width: 24;
+      }
+
       .date-debut {
         width: 100px;
       }
@@ -1133,6 +1178,10 @@
       .ressources-exterieures {
         left: 108px;
         width: 322px;
+      }
+
+      .ligne-affectation {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -1160,7 +1209,10 @@
         <h1>Réseau PERT</h1>
         <span class="separateur-titre" aria-hidden="true">—</span>
         <span id="nom-fichier-actif">Aucun fichier</span>
-        <button id="ouvrir-projet" class="bouton-barre" type="button">Ouvrir</button>
+        <span class="selecteur-fichier">
+          <button class="bouton-barre" type="button" tabindex="-1" aria-hidden="true">Ouvrir</button>
+          <input id="fichier-projet" type="file" accept="application/json,.json" aria-label="Ouvrir un projet JSON">
+        </span>
         <button id="nouveau-projet" class="bouton-barre" type="button">Nouveau projet</button>
         <button id="gerer-ressources" class="bouton-barre" type="button">Ressources</button>
         <button id="ouvrir-calendrier" class="bouton-barre" type="button">Calendrier</button>
@@ -1181,9 +1233,9 @@
         <button id="verifier-projet" class="bouton-barre" type="button">Vérifier le projet</button>
         <button id="budget-mensuel" class="bouton-barre" type="button">Budget mensuel</button>
         <button id="supprimer-activite" class="bouton-barre" type="button" disabled>Supprimer l’activité</button>
-        <input id="fichier-projet" type="file" accept="application/json,.json" hidden>
+        <button id="supprimer-liaison" class="bouton-barre" type="button" disabled>Supprimer la liaison</button>
       </div>
-      <p class="aide">Double-cliquez dans le vide pour créer une activité. Sur une activité : clic gauche pour la sélectionner, double-clic gauche pour la modifier, clic droit pour renseigner ses détails. Sur iPad : appui long.</p>
+      <p class="aide">Double-cliquez dans le vide pour créer une activité. Sur une activité : clic gauche pour la sélectionner, double-clic gauche pour la modifier, clic droit pour renseigner ses détails. Sur iPad : toucher bref pour sélectionner, appui long pour ouvrir la fiche.</p>
       <div class="resume-projet">
         <p id="resume-ressources"><strong>Ressources utilisées :</strong> aucune</p>
         <p id="resume-projet-global"><strong>Durée totale :</strong> non calculable — <strong>Coût total :</strong> 0,00 €</p>
@@ -1258,8 +1310,8 @@
           <button id="retirer-affectation" type="button" disabled>Retirer</button>
         </div>
 
-        <label for="liste-affectations">Ressources affectées</label>
-        <select id="liste-affectations" size="4"></select>
+        <div id="libelle-liste-affectations" class="libelle-objet">Ressources affectées</div>
+        <div id="liste-affectations" role="listbox" aria-labelledby="libelle-liste-affectations"></div>
       </div>
 
       <p class="calcul-en-attente"><strong>Coût total :</strong> <span id="cout-total-activite">0,00 €</span></p>
@@ -1482,7 +1534,7 @@
           <li>Faites glisser une activité pour la déplacer.</li>
           <li>Double-cliquez sur une activité pour modifier son nom, son objet et sa durée.</li>
           <li>Faites un clic droit sur une activité pour saisir sa description et ses ressources. Sur iPad, maintenez le doigt sur l’activité.</li>
-          <li>Cliquez sur une activité, puis sur <strong>Supprimer l’activité</strong>, pour l’effacer.</li>
+          <li>Cliquez ou touchez brièvement une activité, puis utilisez <strong>Supprimer l’activité</strong>.</li>
           <li>Utilisez l’icône calendrier pour fixer une date de début au plus tôt.</li>
           <li>Le menu <strong>Unité</strong> propose Jour, Heure ou Semaine ; une semaine représente 5 jours ouvrés ou 7 jours calendaires.</li>
         </ul>
@@ -1491,7 +1543,7 @@
         <ul>
           <li><strong>Liaison :</strong> faites glisser depuis le rond bleu d’une activité jusqu’au rond bleu de l’activité suivante.</li>
           <li><strong>Suppression au clavier :</strong> sélectionnez la flèche, puis appuyez sur la touche <strong>Suppr</strong>.</li>
-          <li><strong>Suppression sur iPad :</strong> touchez la flèche pour la sélectionner, puis touchez une seconde fois la flèche bleue et confirmez.</li>
+          <li><strong>Suppression sur iPad :</strong> touchez la flèche, puis utilisez <strong>Supprimer la liaison</strong> et confirmez.</li>
         </ul>
 
         <h3>Gérer les ressources</h3>
@@ -1504,7 +1556,7 @@
         <h3>Affecter une ressource</h3>
         <ul>
           <li>Faites un clic droit sur l’activité, choisissez une ressource, saisissez sa charge dans l’unité du projet, puis cliquez sur <strong>Ajouter</strong> et enregistrez.</li>
-          <li>Sélectionnez une affectation existante et modifiez sa durée : <strong>Enregistrer</strong> applique directement la saisie.</li>
+          <li>Les ressources affectées apparaissent sous forme de lignes tactiles. Sélectionnez une ligne pour modifier sa durée ou la retirer ; <strong>Enregistrer</strong> applique directement la saisie.</li>
         </ul>
 
         <h3>Contrôler le projet et les coûts</h3>
@@ -1545,9 +1597,9 @@
     const boutonAnnuler = document.querySelector("#annuler");
     const boutonValiderTache = document.querySelector("#valider-tache");
     const boutonSupprimerActivite = document.querySelector("#supprimer-activite");
+    const boutonSupprimerLiaison = document.querySelector("#supprimer-liaison");
     const boutonNouveauProjet = document.querySelector("#nouveau-projet");
     const boutonEnregistrerProjet = document.querySelector("#enregistrer-projet");
-    const boutonOuvrirProjet = document.querySelector("#ouvrir-projet");
     const nomFichierActif = document.querySelector("#nom-fichier-actif");
     const boutonLierFichierTravail = document.querySelector("#lier-fichier-travail");
     const boutonVerifierProjet = document.querySelector("#verifier-projet");
@@ -1636,6 +1688,7 @@
     let tacheEnEdition = null;
     let tacheDetails = null;
     let affectationsDetails = [];
+    let affectationSelectionneeId = "";
     let ressourcesProjet = [];
     let seuilBudgetMensuel = 0;
     let calendrierProjet = creerCalendrierParDefaut();
@@ -1679,14 +1732,14 @@
       });
     });
 
-    listeAffectations.addEventListener("change", selectionnerAffectationDansListe);
+    listeAffectations.addEventListener("click", selectionnerAffectationDansListe);
     boutonAjouterAffectation.addEventListener("click", ajouterAffectation);
     boutonRetirerAffectation.addEventListener("click", retirerAffectation);
 
     formulaireDetails.addEventListener("submit", (evenement) => {
       evenement.preventDefault();
       if (!tacheDetails) return;
-      if (listeAffectations.value && !modifierAffectation()) return;
+      if (affectationSelectionneeId && !modifierAffectation()) return;
 
       tacheDetails.dataset.description = champDescription.value.trim();
       tacheDetails.dataset.ressources = JSON.stringify(affectationsDetails);
@@ -1706,9 +1759,9 @@
     champUnite.addEventListener("change", actualiserUnite);
 
     boutonSupprimerActivite.addEventListener("click", supprimerActiviteSelectionnee);
+    boutonSupprimerLiaison.addEventListener("click", demanderSuppressionLiaison);
     boutonNouveauProjet.addEventListener("click", creerNouveauProjet);
     boutonEnregistrerProjet.addEventListener("click", enregistrerProjet);
-    boutonOuvrirProjet.addEventListener("click", () => fichierProjet.click());
     boutonLierFichierTravail.addEventListener("click", lierFichierTravail);
     boutonVerifierProjet.addEventListener("click", verifierProjet);
     boutonBudgetMensuel.addEventListener("click", ouvrirControleBudget);
@@ -1851,7 +1904,7 @@
       dialogueDetails.classList.add("fenetre-flottante");
       dialogueDetails.show();
       placerFenetreActivite(dialogueDetails, tache);
-      champDescription.focus();
+      if (!window.matchMedia("(pointer: coarse)").matches) champDescription.focus();
     }
 
     function mettreFenetreAuPremierPlan(fenetre) {
@@ -1950,27 +2003,49 @@
       if (!tacheDetails) return;
       let coutTotal = 0;
 
+      affectationSelectionneeId = affectationsDetails.some((affectation) => (
+        affectation.ressourceId === identifiantSelectionne
+      )) ? identifiantSelectionne : "";
+
       affectationsDetails.forEach((affectation) => {
         const ressource = trouverRessource(affectation.ressourceId);
         if (!ressource) return;
-        const option = document.createElement("option");
+        const bouton = document.createElement("button");
         const coutAffectation = affectation.duree * ressource.coutUnitaire;
         coutTotal += coutAffectation;
-        option.value = affectation.ressourceId;
-        option.textContent = `${ressource.nom} — ${ressource.discipline} — Coût un. : ${formaterMontantEuro(ressource.coutUnitaire)} — Durée : ${formatDuree(affectation.duree)} (${champUnite.value.trim() || "Un."}) — Total : ${formaterMontantEuro(coutAffectation)}`;
-        listeAffectations.appendChild(option);
+        bouton.type = "button";
+        bouton.className = "affectation-liste-bouton";
+        bouton.dataset.ressourceId = affectation.ressourceId;
+        bouton.setAttribute("role", "option");
+        bouton.setAttribute("aria-selected", String(
+          affectation.ressourceId === affectationSelectionneeId
+        ));
+        bouton.classList.toggle(
+          "selectionnee",
+          affectation.ressourceId === affectationSelectionneeId
+        );
+        bouton.textContent = `${ressource.nom} — ${ressource.discipline} — Coût un. : ${formaterMontantEuro(ressource.coutUnitaire)} — Durée : ${formatDuree(affectation.duree)} (${champUnite.value.trim() || "Un."}) — Total : ${formaterMontantEuro(coutAffectation)}`;
+        listeAffectations.appendChild(bouton);
       });
-      coutTotalActivite.textContent = formaterMontantEuro(coutTotal);
 
-      listeAffectations.value = identifiantSelectionne;
-      const selectionValide = Boolean(identifiantSelectionne);
-      boutonRetirerAffectation.disabled = !selectionValide;
+      if (!listeAffectations.childElementCount) {
+        const messageVide = document.createElement("p");
+        messageVide.className = "liste-affectations-vide";
+        messageVide.textContent = "Aucune ressource affectée";
+        listeAffectations.appendChild(messageVide);
+      }
+      coutTotalActivite.textContent = formaterMontantEuro(coutTotal);
+      boutonRetirerAffectation.disabled = !affectationSelectionneeId;
     }
 
-    function selectionnerAffectationDansListe() {
+    function selectionnerAffectationDansListe(evenement) {
       if (!tacheDetails) return;
+      const bouton = evenement.target.closest(".affectation-liste-bouton");
+      if (!bouton) return;
+      affectationSelectionneeId = bouton.dataset.ressourceId || "";
+      actualiserListeAffectations(affectationSelectionneeId);
       const affectation = affectationsDetails.find((element) => (
-        element.ressourceId === listeAffectations.value
+        element.ressourceId === affectationSelectionneeId
       ));
       boutonRetirerAffectation.disabled = !affectation;
       if (!affectation) return;
@@ -1994,7 +2069,7 @@
 
     function modifierAffectation() {
       if (!tacheDetails) return false;
-      const ancienIdentifiant = listeAffectations.value;
+      const ancienIdentifiant = affectationSelectionneeId;
       const saisie = lireSaisieAffectation();
       if (!ancienIdentifiant || !saisie) return false;
       if (affectationsDetails.some((element) => (
@@ -2015,8 +2090,8 @@
     }
 
     function retirerAffectation() {
-      if (!tacheDetails || !listeAffectations.value) return;
-      const identifiant = listeAffectations.value;
+      if (!tacheDetails || !affectationSelectionneeId) return;
+      const identifiant = affectationSelectionneeId;
       affectationsDetails = affectationsDetails.filter((element) => (
         element.ressourceId !== identifiant
       ));
@@ -2202,7 +2277,7 @@
       zoneTravail.querySelectorAll(".tache").forEach(afficherCoutTotalTache);
       if (dialogueDetails.open && tacheDetails) {
         actualiserChoixRessourcesActivite(champRessourceActivite.value);
-        actualiserListeAffectations(listeAffectations.value);
+        actualiserListeAffectations(affectationSelectionneeId);
       }
       sauvegarderProjetLocal();
     }
@@ -2364,16 +2439,22 @@
 
         evenement.preventDefault();
         tache.setPointerCapture(evenement.pointerId);
-        tache.classList.add("en-deplacement");
-
         const debutX = evenement.clientX;
         const debutY = evenement.clientY;
         const gaucheInitiale = tache.offsetLeft;
         const hautInitial = tache.offsetTop;
+        let deplacementCommence = false;
 
         function deplacer(evenementMouvement) {
-          const nouvelleGauche = gaucheInitiale + evenementMouvement.clientX - debutX;
-          const nouveauHaut = hautInitial + evenementMouvement.clientY - debutY;
+          const deplacementX = evenementMouvement.clientX - debutX;
+          const deplacementY = evenementMouvement.clientY - debutY;
+          if (!deplacementCommence) {
+            if (Math.hypot(deplacementX, deplacementY) <= TOLERANCE_APPUI_LONG) return;
+            deplacementCommence = true;
+            tache.classList.add("en-deplacement");
+          }
+          const nouvelleGauche = gaucheInitiale + deplacementX;
+          const nouveauHaut = hautInitial + deplacementY;
 
           tache.style.left = `${limiter(nouvelleGauche, 0, zoneTravail.clientWidth - tache.offsetWidth)}px`;
           tache.style.top = `${limiter(nouveauHaut, 0, zoneTravail.clientHeight - tache.offsetHeight)}px`;
@@ -2381,16 +2462,28 @@
           if (tache === tacheEnEdition || tache === tacheDetails) repositionnerFenetresActivites();
         }
 
-        function terminer() {
+        function nettoyerDeplacement() {
           tache.classList.remove("en-deplacement");
           tache.removeEventListener("pointermove", deplacer);
           tache.removeEventListener("pointerup", terminer);
-          tache.removeEventListener("pointercancel", terminer);
+          tache.removeEventListener("pointercancel", annuler);
+        }
+
+        function terminer() {
+          nettoyerDeplacement();
+          if (!deplacementCommence) {
+            selectionnerLiaison(null);
+            selectionnerActivite(tache);
+          }
+        }
+
+        function annuler() {
+          nettoyerDeplacement();
         }
 
         tache.addEventListener("pointermove", deplacer);
         tache.addEventListener("pointerup", terminer);
-        tache.addEventListener("pointercancel", terminer);
+        tache.addEventListener("pointercancel", annuler);
       });
     }
 
@@ -2505,9 +2598,7 @@
         evenement.stopPropagation();
 
         if (liaison === liaisonSelectionnee) {
-          if (window.confirm("Supprimer cette liaison ?")) {
-            supprimerLiaisonSelectionnee();
-          }
+          demanderSuppressionLiaison();
           return;
         }
 
@@ -2601,6 +2692,7 @@
       }
 
       liaisonSelectionnee = liaison;
+      boutonSupprimerLiaison.disabled = !liaisonSelectionnee;
       if (ancienneLiaison) actualiserApparenceLiaison(ancienneLiaison);
 
       if (liaison) {
@@ -2627,7 +2719,13 @@
       liaisonSelectionnee.groupe.remove();
       liaisons = liaisons.filter((liaison) => liaison !== liaisonSelectionnee);
       liaisonSelectionnee = null;
+      boutonSupprimerLiaison.disabled = true;
       recalculerPlanning();
+    }
+
+    function demanderSuppressionLiaison() {
+      if (!liaisonSelectionnee) return;
+      if (window.confirm("Supprimer cette liaison ?")) supprimerLiaisonSelectionnee();
     }
 
     function selectionnerActivite(tache) {
