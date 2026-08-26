@@ -8,7 +8,7 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (4 660 lignes, 167 353 octets après les corrections tactiles et l’ouverture directe des JSON sur iPad).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (4 672 lignes, 167 828 octets après le déclenchement tactile direct des suppressions sur iPad).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
@@ -155,6 +155,7 @@
 - Clarification du mode d’emploi : remplacement du planning affiché par « Nouveau projet », geste exact de création d’une liaison, suppression d’une liaison au clavier ou sur iPad, modification et suppression des ressources, portée de « Vérifier le projet », contenu du tableau des affectations et comparaison du budget mensuel quelle que soit l’unité de temps. Publication GitHub autorisée le 26 août 2026.
 - Corrections pour iPad : un toucher bref sélectionne désormais explicitement une activité sans déclencher son déplacement ; un bouton « Supprimer la liaison » devient disponible lorsqu’une flèche est sélectionnée et la zone tactile des liaisons est élargie ; les ressources affectées sont remplacées par des lignes tactiles visibles, sans modifier leurs données ni le calcul des coûts. La fiche ne donne plus automatiquement le focus à la description sur écran tactile, afin de ne pas ouvrir le clavier devant les ressources. Syntaxe JavaScript, structure HTML et différences Git contrôlées. Publication GitHub autorisée le 26 août 2026 ; un essai réel dans Safari sur iPad doit suivre la mise en ligne.
 - Correction du bouton « Ouvrir » sur iPad : le champ JSON n’est plus entièrement masqué ni déclenché par un clic JavaScript artificiel. Un véritable sélecteur de fichier transparent recouvre désormais le bouton visuel et reçoit directement le toucher, ce qui permet à iPadOS d’afficher son sélecteur de documents. Le chargement, la validation et les données du JSON restent inchangés. Contrôles réussis : syntaxe JavaScript, sélecteur unique sans attribut `hidden`, suppression de l’ancien `fichierProjet.click()` et absence d’identifiants HTML dupliqués. Publication GitHub autorisée le 26 août 2026 ; un essai réel dans Safari sur iPad doit suivre la mise en ligne.
+- Après essai réel dans Safari sur iPad, la sélection des activités et des liaisons fonctionne, mais les boutons de suppression ne produisent pas leur événement `click` et aucune confirmation n’apparaît. Correction : « Supprimer l’activité » et « Supprimer la liaison » déclenchent aussi directement leur commande sur `pointerup` pour les pointeurs tactiles, avec conservation du clic sur ordinateur, de la confirmation obligatoire et des garde-fous contre une double suppression. Syntaxe JavaScript, branchement des deux commandes et différences Git contrôlés. Publication GitHub autorisée le 26 août 2026.
 
 ## Prochaine étape proposée
 

@@ -1083,6 +1083,7 @@
       height: 32px;
       padding: 0 11px;
       white-space: nowrap;
+      touch-action: manipulation;
     }
 
     .selecteur-fichier {
@@ -1760,6 +1761,8 @@
 
     boutonSupprimerActivite.addEventListener("click", supprimerActiviteSelectionnee);
     boutonSupprimerLiaison.addEventListener("click", demanderSuppressionLiaison);
+    activerCommandeTactile(boutonSupprimerActivite, supprimerActiviteSelectionnee);
+    activerCommandeTactile(boutonSupprimerLiaison, demanderSuppressionLiaison);
     boutonNouveauProjet.addEventListener("click", creerNouveauProjet);
     boutonEnregistrerProjet.addEventListener("click", enregistrerProjet);
     boutonLierFichierTravail.addEventListener("click", lierFichierTravail);
@@ -1823,6 +1826,15 @@
       evenement.preventDefault();
       supprimerLiaisonSelectionnee();
     });
+
+    function activerCommandeTactile(bouton, action) {
+      bouton.addEventListener("pointerup", (evenement) => {
+        if (evenement.pointerType === "mouse") return;
+        evenement.preventDefault();
+        evenement.stopPropagation();
+        action();
+      });
+    }
 
     formulaire.addEventListener("submit", (evenement) => {
       evenement.preventDefault();
