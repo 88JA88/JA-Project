@@ -1103,9 +1103,8 @@
       cursor: pointer;
     }
 
-    #supprimer-activite:disabled {
+    .commande-indisponible {
       opacity: 0.45;
-      cursor: default;
     }
 
     @page {
@@ -1233,8 +1232,8 @@
         <button id="lier-fichier-travail" class="bouton-barre" type="button">Lier le fichier de travail</button>
         <button id="verifier-projet" class="bouton-barre" type="button">Vérifier le projet</button>
         <button id="budget-mensuel" class="bouton-barre" type="button">Budget mensuel</button>
-        <button id="supprimer-activite" class="bouton-barre" type="button" disabled>Supprimer l’activité</button>
-        <button id="supprimer-liaison" class="bouton-barre" type="button" disabled>Supprimer la liaison</button>
+        <button id="supprimer-activite" class="bouton-barre commande-indisponible" type="button" aria-disabled="true">Supprimer l’activité</button>
+        <button id="supprimer-liaison" class="bouton-barre commande-indisponible" type="button" aria-disabled="true">Supprimer la liaison</button>
       </div>
       <p class="aide">Double-cliquez dans le vide pour créer une activité. Sur une activité : clic gauche pour la sélectionner, double-clic gauche pour la modifier, clic droit pour renseigner ses détails. Sur iPad : toucher bref pour sélectionner, appui long pour ouvrir la fiche.</p>
       <div class="resume-projet">
@@ -1583,6 +1582,18 @@
     </form>
   </dialog>
 
+  <dialog id="dialogue-confirmation-suppression">
+    <form id="formulaire-confirmation-suppression">
+      <h2>Confirmer la suppression</h2>
+      <p id="message-confirmation-suppression"></p>
+
+      <div class="actions">
+        <button id="annuler-confirmation-suppression" type="button">Annuler</button>
+        <button id="confirmer-suppression" type="submit">Supprimer</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     "use strict";
 
@@ -1661,6 +1672,11 @@
     const avertissementBudget = document.querySelector("#avertissement-budget");
     const boutonFermerBudget = document.querySelector("#fermer-budget");
     const dialogueModeEmploi = document.querySelector("#dialogue-mode-emploi");
+    const dialogueConfirmationSuppression = document.querySelector("#dialogue-confirmation-suppression");
+    const formulaireConfirmationSuppression = document.querySelector("#formulaire-confirmation-suppression");
+    const messageConfirmationSuppression = document.querySelector("#message-confirmation-suppression");
+    const boutonAnnulerConfirmationSuppression = document.querySelector("#annuler-confirmation-suppression");
+    const boutonConfirmerSuppression = document.querySelector("#confirmer-suppression");
     const dialogueVerification = document.querySelector("#dialogue-verification");
     const resumeVerification = document.querySelector("#resume-verification");
     const nombreErreurs = document.querySelector("#nombre-erreurs");
@@ -1699,6 +1715,7 @@
     let chargementInitialActif = true;
     let ecritureFichierTravail = Promise.resolve();
     let rafraichissementGraphiqueProgramme = 0;
+    let actionSuppressionConfirmee = null;
     const observateurDimensionsTaches = typeof ResizeObserver === "function"
       ? new ResizeObserver(() => programmerRafraichissementGraphique())
       : null;
@@ -1759,9 +1776,9 @@
 
     champUnite.addEventListener("change", actualiserUnite);
 
-    boutonSupprimerActivite.addEventListener("click", supprimerActiviteSelectionnee);
+    boutonSupprimerActivite.addEventListener("click", demanderSuppressionActivite);
     boutonSupprimerLiaison.addEventListener("click", demanderSuppressionLiaison);
-    activerCommandeTactile(boutonSupprimerActivite, supprimerActiviteSelectionnee);
+    activerCommandeTactile(boutonSupprimerActivite, demanderSuppressionActivite);
     activerCommandeTactile(boutonSupprimerLiaison, demanderSuppressionLiaison);
     boutonNouveauProjet.addEventListener("click", creerNouveauProjet);
     boutonEnregistrerProjet.addEventListener("click", enregistrerProjet);
@@ -1792,6 +1809,16 @@
     boutonOuvrirModeEmploi.addEventListener("click", () => dialogueModeEmploi.showModal());
     dialogueModeEmploi.addEventListener("click", (evenement) => {
       if (evenement.target === dialogueModeEmploi) dialogueModeEmploi.close();
+    });
+    formulaireConfirmationSuppression.addEventListener("submit", (evenement) => {
+      evenement.preventDefault();
+      confirmerSuppressionDemandee();
+    });
+    boutonAnnulerConfirmationSuppression.addEventListener("click", annulerSuppressionDemandee);
+    activerCommandeTactile(boutonConfirmerSuppression, confirmerSuppressionDemandee);
+    activerCommandeTactile(boutonAnnulerConfirmationSuppression, annulerSuppressionDemandee);
+    dialogueConfirmationSuppression.addEventListener("close", () => {
+      actionSuppressionConfirmee = null;
     });
     boutonGererRessources.addEventListener("click", ouvrirGestionRessources);
     boutonOuvrirCalendrier.addEventListener("click", ouvrirCalendrierProjet);
@@ -1834,6 +1861,30 @@
         evenement.stopPropagation();
         action();
       });
+    }
+
+    function actualiserDisponibiliteCommande(bouton, disponible) {
+      bouton.classList.toggle("commande-indisponible", !disponible);
+      bouton.setAttribute("aria-disabled", String(!disponible));
+    }
+
+    function ouvrirConfirmationSuppression(message, action) {
+      if (dialogueConfirmationSuppression.open) return;
+      messageConfirmationSuppression.textContent = message;
+      actionSuppressionConfirmee = action;
+      dialogueConfirmationSuppression.showModal();
+    }
+
+    function confirmerSuppressionDemandee() {
+      const action = actionSuppressionConfirmee;
+      actionSuppressionConfirmee = null;
+      if (dialogueConfirmationSuppression.open) dialogueConfirmationSuppression.close();
+      if (action) action();
+    }
+
+    function annulerSuppressionDemandee() {
+      actionSuppressionConfirmee = null;
+      if (dialogueConfirmationSuppression.open) dialogueConfirmationSuppression.close();
     }
 
     formulaire.addEventListener("submit", (evenement) => {
@@ -2704,7 +2755,7 @@
       }
 
       liaisonSelectionnee = liaison;
-      boutonSupprimerLiaison.disabled = !liaisonSelectionnee;
+      actualiserDisponibiliteCommande(boutonSupprimerLiaison, Boolean(liaisonSelectionnee));
       if (ancienneLiaison) actualiserApparenceLiaison(ancienneLiaison);
 
       if (liaison) {
@@ -2731,27 +2782,36 @@
       liaisonSelectionnee.groupe.remove();
       liaisons = liaisons.filter((liaison) => liaison !== liaisonSelectionnee);
       liaisonSelectionnee = null;
-      boutonSupprimerLiaison.disabled = true;
+      actualiserDisponibiliteCommande(boutonSupprimerLiaison, false);
       recalculerPlanning();
     }
 
     function demanderSuppressionLiaison() {
       if (!liaisonSelectionnee) return;
-      if (window.confirm("Supprimer cette liaison ?")) supprimerLiaisonSelectionnee();
+      ouvrirConfirmationSuppression("Supprimer cette liaison ?", supprimerLiaisonSelectionnee);
     }
 
     function selectionnerActivite(tache) {
       if (activiteSelectionnee) activiteSelectionnee.classList.remove("selectionnee");
       activiteSelectionnee = tache;
       if (activiteSelectionnee) activiteSelectionnee.classList.add("selectionnee");
-      boutonSupprimerActivite.disabled = !activiteSelectionnee;
+      actualiserDisponibiliteCommande(boutonSupprimerActivite, Boolean(activiteSelectionnee));
+    }
+
+    function demanderSuppressionActivite() {
+      if (!activiteSelectionnee) return;
+
+      const tache = activiteSelectionnee;
+      ouvrirConfirmationSuppression(
+        `Supprimer l’activité « ${tache.dataset.nom} » ?`,
+        supprimerActiviteSelectionnee
+      );
     }
 
     function supprimerActiviteSelectionnee() {
       if (!activiteSelectionnee) return;
 
       const tache = activiteSelectionnee;
-      if (!window.confirm(`Supprimer l’activité « ${tache.dataset.nom} » ?`)) return;
 
       selectionnerLiaison(null);
       liaisons = liaisons.filter((liaison) => {
