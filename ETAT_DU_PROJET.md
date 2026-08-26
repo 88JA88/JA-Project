@@ -8,7 +8,7 @@
 
 ## Fichiers principaux examinés
 
-- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (4 561 lignes, 163 827 octets après le remplacement de l’unité libre par un menu).
+- `index.html` : application web autonome « Réseau PERT », composée d’un seul fichier HTML avec CSS et JavaScript intégrés (4 562 lignes, 164 080 octets après la clarification du mode d’emploi).
 - `planning.json` : fichier de projet PERT au format JSON, syntaxiquement valide, déclaré au format `planning-reseau`, version 1.
 - Aucun autre fichier du programme n’a été modifié lors de ce relevé.
 
@@ -152,6 +152,7 @@
 - Correction locale de l’enregistrement d’une affectation : lorsque celle-ci est sélectionnée dans la fiche d’activité, le bouton général « Enregistrer » applique automatiquement la ressource et la durée actuellement saisies. Test réussi avec passage de 2 à 3 unités et refus d’une durée supérieure à celle de l’activité. Le bouton redondant « Modifier » a ensuite été supprimé avec toutes ses références d’interface, sans retirer l’enregistrement automatique. Cette correction n’est pas encore publiée.
 - Ajout local de l’unité après la durée inscrite dans chaque barre du Gantt, avec singulier et pluriel. Les premiers tests couvraient également les unités libres avant leur remplacement par le menu limité décrit ci-dessous. Cette correction n’est pas encore publiée.
 - Remplacement local de la saisie libre « Unité » par un menu proposant uniquement Jour, Heure et Semaine ; l’unité Mois a été écartée. Le mode d’emploi est actualisé et le test confirme les trois seules options, leur branchement au recalcul et la normalisation des anciens JSON. Cette correction n’est pas encore publiée.
+- Clarification du mode d’emploi : remplacement du planning affiché par « Nouveau projet », geste exact de création d’une liaison, suppression d’une liaison au clavier ou sur iPad, modification et suppression des ressources, portée de « Vérifier le projet », contenu du tableau des affectations et comparaison du budget mensuel quelle que soit l’unité de temps. Publication GitHub autorisée le 26 août 2026.
 
 ## Prochaine étape proposée
 
