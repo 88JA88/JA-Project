@@ -1542,7 +1542,7 @@
         <h3>Créer ou supprimer une liaison</h3>
         <ul>
           <li><strong>Liaison :</strong> faites glisser depuis le rond bleu d’une activité jusqu’au rond bleu de l’activité suivante.</li>
-          <li><strong>Suppression au clavier :</strong> sélectionnez la flèche, puis appuyez sur la touche <strong>Suppr</strong>.</li>
+          <li><strong>Suppression au clavier :</strong> sélectionnez la flèche, puis appuyez sur <strong>Suppr</strong> ou <strong>Retour arrière</strong> et confirmez. Ces touches restent sans effet sur la liaison pendant une saisie.</li>
           <li><strong>Suppression sur iPad :</strong> touchez la flèche, puis utilisez <strong>Supprimer la liaison</strong> et confirmez.</li>
         </ul>
 
@@ -1584,7 +1584,7 @@
 
   <dialog id="dialogue-confirmation-suppression">
     <form id="formulaire-confirmation-suppression">
-      <h2>Confirmer la suppression</h2>
+      <h2 id="titre-confirmation-suppression">Confirmer la suppression</h2>
       <p id="message-confirmation-suppression"></p>
 
       <div class="actions">
@@ -1674,6 +1674,7 @@
     const dialogueModeEmploi = document.querySelector("#dialogue-mode-emploi");
     const dialogueConfirmationSuppression = document.querySelector("#dialogue-confirmation-suppression");
     const formulaireConfirmationSuppression = document.querySelector("#formulaire-confirmation-suppression");
+    const titreConfirmationSuppression = document.querySelector("#titre-confirmation-suppression");
     const messageConfirmationSuppression = document.querySelector("#message-confirmation-suppression");
     const boutonAnnulerConfirmationSuppression = document.querySelector("#annuler-confirmation-suppression");
     const boutonConfirmerSuppression = document.querySelector("#confirmer-suppression");
@@ -1753,6 +1754,7 @@
     listeAffectations.addEventListener("click", selectionnerAffectationDansListe);
     boutonAjouterAffectation.addEventListener("click", ajouterAffectation);
     boutonRetirerAffectation.addEventListener("click", retirerAffectation);
+    activerCommandeTactile(boutonRetirerAffectation, retirerAffectation);
 
     formulaireDetails.addEventListener("submit", (evenement) => {
       evenement.preventDefault();
@@ -1772,6 +1774,7 @@
     boutonAjouterRessource.addEventListener("click", ajouterRessource);
     boutonModifierRessource.addEventListener("click", modifierRessource);
     boutonSupprimerRessource.addEventListener("click", supprimerRessource);
+    activerCommandeTactile(boutonSupprimerRessource, supprimerRessource);
     boutonFermerRessources.addEventListener("click", () => dialogueRessources.close());
 
     champUnite.addEventListener("change", actualiserUnite);
@@ -1847,11 +1850,16 @@
 
     document.addEventListener("keydown", (evenement) => {
       if (evenement.key !== "Delete" && evenement.key !== "Backspace") return;
-      if (dialogue.open || evenement.target instanceof HTMLInputElement) return;
+      const cible = evenement.target;
+      const saisieEnCours = cible instanceof HTMLInputElement
+        || cible instanceof HTMLTextAreaElement
+        || cible instanceof HTMLSelectElement
+        || (cible instanceof HTMLElement && cible.isContentEditable);
+      if (dialogue.open || saisieEnCours) return;
       if (!liaisonSelectionnee) return;
 
       evenement.preventDefault();
-      supprimerLiaisonSelectionnee();
+      demanderSuppressionLiaison();
     });
 
     function activerCommandeTactile(bouton, action) {
@@ -1868,9 +1876,16 @@
       bouton.setAttribute("aria-disabled", String(!disponible));
     }
 
-    function ouvrirConfirmationSuppression(message, action) {
+    function ouvrirConfirmationSuppression(
+      message,
+      action,
+      titre = "Confirmer la suppression",
+      libelleConfirmation = "Supprimer"
+    ) {
       if (dialogueConfirmationSuppression.open) return;
+      titreConfirmationSuppression.textContent = titre;
       messageConfirmationSuppression.textContent = message;
+      boutonConfirmerSuppression.textContent = libelleConfirmation;
       actionSuppressionConfirmee = action;
       dialogueConfirmationSuppression.showModal();
     }
@@ -2268,7 +2283,15 @@
         window.alert("Cette ressource est affectée à une activité et ne peut pas être supprimée.");
         return;
       }
-      if (!window.confirm(`Supprimer ${ressource.nom} — ${ressource.discipline} ?`)) return;
+      ouvrirConfirmationSuppression(
+        `Supprimer la ressource « ${ressource.nom} — ${ressource.discipline} » ?`,
+        () => supprimerRessourceConfirmee(ressource.id)
+      );
+    }
+
+    function supprimerRessourceConfirmee(identifiantRessource) {
+      const ressource = trouverRessource(identifiantRessource);
+      if (!ressource) return;
 
       ressourcesProjet = ressourcesProjet.filter((element) => element.id !== ressource.id);
       champNomRessource.value = "";
@@ -3251,10 +3274,12 @@
         const supprimer = document.createElement("button");
         supprimer.type = "button";
         supprimer.textContent = "Retirer";
-        supprimer.addEventListener("click", () => {
+        const retirerJourNonTravaille = () => {
           joursNonTravaillesEdition = joursNonTravaillesEdition.filter((date) => date !== valeur);
           afficherJoursNonTravaillesEdition();
-        });
+        };
+        supprimer.addEventListener("click", retirerJourNonTravaille);
+        activerCommandeTactile(supprimer, retirerJourNonTravaille);
         ligne.append(libelle, supprimer);
         listeJoursNonTravailles.appendChild(ligne);
       });
@@ -3614,17 +3639,21 @@
       window.setTimeout(() => URL.revokeObjectURL(adresse), 1000);
     }
 
-    async function creerNouveauProjet() {
+    function creerNouveauProjet() {
       const projetActuelNonVide = zoneTravail.querySelector(".tache") !== null;
-      if (
-        projetActuelNonVide
-        && !window.confirm(
-          "Créer un nouveau projet vide ? Vérifiez que le projet actuel est bien enregistré avant de continuer."
-        )
-      ) {
+      if (projetActuelNonVide) {
+        ouvrirConfirmationSuppression(
+          "Créer un nouveau projet vide ? Vérifiez que le projet actuel est bien enregistré avant de continuer.",
+          creerNouveauProjetConfirme,
+          "Confirmer le nouveau projet",
+          "Créer"
+        );
         return;
       }
+      creerNouveauProjetConfirme();
+    }
 
+    async function creerNouveauProjetConfirme() {
       let nouveauFichier = null;
       if (typeof window.showSaveFilePicker === "function") {
         try {
@@ -3733,12 +3762,26 @@
         const projetActuelNonVide = zoneTravail.querySelector(".tache") !== null;
 
         if (projetActuelNonVide) {
-          const remplacer = window.confirm(
-            "Lier ce fichier remplacera le planning actuellement affiché. Continuer ?"
+          ouvrirConfirmationSuppression(
+            "Lier ce fichier remplacera le planning actuellement affiché. Continuer ?",
+            () => appliquerLiaisonFichierTravail(projet, fichier),
+            "Confirmer la liaison",
+            "Lier"
           );
-          if (!remplacer) return;
+          return;
         }
 
+        await appliquerLiaisonFichierTravail(projet, fichier);
+      } catch (erreur) {
+        ouvertureProjetEnCours = false;
+        if (erreur?.name !== "AbortError") {
+          window.alert("Impossible de lier ce fichier de travail.");
+        }
+      }
+    }
+
+    async function appliquerLiaisonFichierTravail(projet, fichier) {
+      try {
         chargementInitialActif = false;
         fichierTravailLie = fichier;
         ouvertureProjetEnCours = true;
@@ -3749,9 +3792,7 @@
         await ecrireFichierTravailLie();
       } catch (erreur) {
         ouvertureProjetEnCours = false;
-        if (erreur?.name !== "AbortError") {
-          window.alert("Impossible de lier ce fichier de travail.");
-        }
+        window.alert("Impossible de lier ce fichier de travail.");
       }
     }
 
@@ -4372,12 +4413,25 @@
         const projetActuelNonVide = zoneTravail.querySelector(".tache") !== null;
 
         if (projetActuelNonVide) {
-          const remplacer = window.confirm(
-            "Ouvrir ce projet remplacera le planning actuellement affiché. Continuer ?"
+          ouvrirConfirmationSuppression(
+            "Ouvrir ce projet remplacera le planning actuellement affiché. Continuer ?",
+            () => appliquerOuvertureProjet(projet, fichier),
+            "Confirmer l’ouverture",
+            "Ouvrir"
           );
-          if (!remplacer) return;
+          return;
         }
 
+        await appliquerOuvertureProjet(projet, fichier);
+      } catch (erreur) {
+        window.alert("Ce fichier ne contient pas un projet de planning valide.");
+      } finally {
+        fichierProjet.value = "";
+      }
+    }
+
+    async function appliquerOuvertureProjet(projet, fichier) {
+      try {
         chargementInitialActif = false;
         await ecritureFichierTravail.catch(() => {});
         fichierTravailLie = null;
@@ -4385,9 +4439,7 @@
         afficherProjet(projet);
         definirNomFichierActif(fichier.name);
       } catch (erreur) {
-        window.alert("Ce fichier ne contient pas un projet de planning valide.");
-      } finally {
-        fichierProjet.value = "";
+        window.alert("Impossible d’ouvrir ce projet.");
       }
     }
 
